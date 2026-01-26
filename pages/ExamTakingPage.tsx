@@ -10,7 +10,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 const ExamTakingPage: React.FC = () => {
     const { setPage, activeExam, addResult, activeStudent: student } = useAppContext();
     const { isPrimaryTab } = useSingletonTab('exam-session-channel');
-    
+
     const [isInitialized, setIsInitialized] = useState(false);
     const [currentQuestions, setCurrentQuestions] = useState<Question[]>([]);
     const [answers, setAnswers] = useState<StudentAnswer[]>([]);
@@ -24,10 +24,10 @@ const ExamTakingPage: React.FC = () => {
     // Anti-cheat grace period state
     const [showCheatWarning, setShowCheatWarning] = useState(false);
     const [cheatCountdown, setCheatCountdown] = useState(5);
-    const warningTimers = useRef<{interval: number | null, timeout: number | null}>({interval: null, timeout: null});
+    const warningTimers = useRef<{ interval: number | null, timeout: number | null }>({ interval: null, timeout: null });
 
     const optionLabels = ['ก', 'ข', 'ค', 'ง'];
-    
+
     const shuffleArray = <T,>(array: T[]): T[] => {
         const newArray = [...array];
         for (let i = newArray.length - 1; i > 0; i--) {
@@ -42,7 +42,7 @@ const ExamTakingPage: React.FC = () => {
             // 1. Shuffle questions
             const shuffled = shuffleArray(activeExam.questions);
             const selectedQuestions = shuffled.slice(0, activeExam.totalQuestions);
-            
+
             // 2. Create shuffled order for options for each question
             const newOrders: Record<string, number[]> = {};
             selectedQuestions.forEach((q: Question) => {
@@ -90,13 +90,13 @@ const ExamTakingPage: React.FC = () => {
         const getFullscreenElement = () => {
             const doc = document as any;
             return doc.fullscreenElement ||
-                   doc.webkitFullscreenElement ||
-                   doc.mozFullScreenElement ||
-                   doc.msFullscreenElement;
+                doc.webkitFullscreenElement ||
+                doc.mozFullScreenElement ||
+                doc.msFullscreenElement;
         }
 
         const elem = document.documentElement as any;
-        const isFullscreenApiSupported = 
+        const isFullscreenApiSupported =
             elem.requestFullscreen ||
             elem.webkitRequestFullscreen ||
             elem.mozRequestFullScreen ||
@@ -120,7 +120,7 @@ const ExamTakingPage: React.FC = () => {
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
         document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-        
+
         return () => {
             document.removeEventListener('fullscreenchange', handleFullscreenChange);
             document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
@@ -133,13 +133,13 @@ const ExamTakingPage: React.FC = () => {
     const cancelCheatingWarning = useCallback(() => {
         if (warningTimers.current.interval) clearInterval(warningTimers.current.interval);
         if (warningTimers.current.timeout) clearTimeout(warningTimers.current.timeout);
-        warningTimers.current = {interval: null, timeout: null};
+        warningTimers.current = { interval: null, timeout: null };
         setShowCheatWarning(false);
     }, []);
 
     const handleCheating = useCallback(() => {
         if (showCheatWarning || !isInitialized) return;
-        
+
         setShowCheatWarning(true);
         setCheatCountdown(5);
 
@@ -168,7 +168,7 @@ const ExamTakingPage: React.FC = () => {
             document.removeEventListener('visibilitychange', handleVisibilityChange);
         };
     }, [showCheatWarning, cancelCheatingWarning]);
-    
+
     const submitExam = useCallback(() => {
         if (!student || !activeExam) return;
         isSubmitting.current = true;
@@ -243,14 +243,14 @@ const ExamTakingPage: React.FC = () => {
             setCurrentQuestionIndex(prev => prev - 1);
         }
     };
-    
+
     const minutes = Math.floor(timeLeft / 60);
     const seconds = timeLeft % 60;
     const currentQuestion = currentQuestions[currentQuestionIndex];
-    
+
     const currentAnswer = answers.find(a => a.questionId === currentQuestion.id);
     const isCurrentQuestionAnswered = currentAnswer?.selectedAnswerIndex !== null && currentAnswer?.selectedAnswerIndex !== undefined;
-    
+
     const minSubmitTimeInSeconds = (activeExam.minSubmitTime || 0) * 60;
     const elapsedTimeInSeconds = (activeExam.timeLimit * 60) - timeLeft;
     const isSubmitAllowed = elapsedTimeInSeconds >= minSubmitTimeInSeconds;
@@ -263,10 +263,10 @@ const ExamTakingPage: React.FC = () => {
                     <WarningIcon className="w-24 h-24 text-yellow-300 mb-6" />
                     <h1 className="text-4xl font-bold mb-4">คุณได้ออกจากโหมดเต็มจอ!</h1>
                     <p className="text-xl max-w-2xl text-center mb-8">
-                        ระบบได้ทำการเริ่มข้อสอบใหม่ตามกฎการสอบ<br/>
+                        ระบบได้ทำการเริ่มข้อสอบใหม่ตามกฎการสอบ<br />
                         กรุณาคลิกปุ่มด้านล่างเพื่อกลับเข้าสู่โหมดเต็มจอและทำข้อสอบต่อ
                     </p>
-                    <button 
+                    <button
                         onClick={handleReEnterFullscreen}
                         className="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 text-lg"
                     >
@@ -279,7 +279,7 @@ const ExamTakingPage: React.FC = () => {
                     <WarningIcon className="w-24 h-24 text-yellow-300 mb-6 animate-pulse" />
                     <h1 className="text-4xl font-bold mb-4">ตรวจพบการออกจากหน้าต่างสอบ!</h1>
                     <p className="text-xl max-w-2xl text-center mb-8">
-                        กรุณากลับมาที่หน้าต่างนี้เพื่อทำข้อสอบต่อ<br/>
+                        กรุณากลับมาที่หน้าต่างนี้เพื่อทำข้อสอบต่อ<br />
                         ระบบจะทำการรีเซ็ตข้อสอบในอีก...
                     </p>
                     <p className="text-7xl font-mono font-bold">{cheatCountdown}</p>
@@ -290,11 +290,11 @@ const ExamTakingPage: React.FC = () => {
                     <header className="bg-white shadow-md rounded-xl p-4 mb-6">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
                             <div>
-                                <h1 className="text-xl font-bold text-gray-800">{activeExam.subject}</h1>
+                                <h1 className="text-xl font-bold text-gray-800">วิชา {activeExam.subject}</h1>
                                 <p className="text-md text-gray-500">{activeExam.title}</p>
                             </div>
                             <div className="w-full md:w-auto flex flex-col items-start md:items-end gap-2 mt-2 md:mt-0">
-                               <p className="text-sm text-gray-600 font-medium">{`${student.prefix}${student.firstName} ${student.lastName}`}</p>
+                                <p className="text-sm text-gray-600 font-medium">{`${student.prefix}${student.firstName} ${student.lastName}`}</p>
                                 <div className="flex items-center gap-4">
                                     <div className="text-sm font-medium">ข้อที่ {currentQuestionIndex + 1} / {activeExam.totalQuestions}</div>
                                     <div className={`flex items-center gap-2 font-bold p-2 rounded-lg ${timeLeft < 60 ? 'text-red-600 bg-red-100' : 'text-indigo-600 bg-indigo-100'}`}>
@@ -304,7 +304,7 @@ const ExamTakingPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                         <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
+                        <div className="w-full bg-gray-200 rounded-full h-2 mt-3">
                             <div className="bg-indigo-600 h-2 rounded-full transition-all duration-300" style={{ width: `${((currentQuestionIndex + 1) / activeExam.totalQuestions) * 100}%` }}></div>
                         </div>
                     </header>
@@ -317,7 +317,7 @@ const ExamTakingPage: React.FC = () => {
                                     const answer = answers.find(a => a.questionId === currentQuestion.id);
                                     const isSelected = answer?.selectedAnswerIndex === originalOptIndex;
                                     const optionText = currentQuestion.options[originalOptIndex];
-                                    
+
                                     return (
                                         <label key={originalOptIndex} className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-colors ${isSelected ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-200 hover:bg-gray-50'}`}>
                                             <input
@@ -346,7 +346,7 @@ const ExamTakingPage: React.FC = () => {
                                     ข้อถัดไป
                                 </button>
                             ) : (
-                                 <div className="relative group">
+                                <div className="relative group">
                                     <button
                                         onClick={() => setShowConfirmModal(true)}
                                         disabled={!isSubmitAllowed}
@@ -363,13 +363,13 @@ const ExamTakingPage: React.FC = () => {
                             )}
                         </div>
                     </main>
-                    
-                    {showConfirmModal && 
-                        <ConfirmationModal 
-                            title="ยืนยันการส่งข้อสอบ" 
+
+                    {showConfirmModal &&
+                        <ConfirmationModal
+                            title="ยืนยันการส่งข้อสอบ"
                             message="คุณแน่ใจหรือไม่ว่าต้องการส่งคำตอบ?"
                             confirmText="ส่งคำตอบ"
-                            onConfirm={submitExam} 
+                            onConfirm={submitExam}
                             onCancel={() => setShowConfirmModal(false)}
                             confirmButtonClass="bg-green-600 hover:bg-green-700"
                         />

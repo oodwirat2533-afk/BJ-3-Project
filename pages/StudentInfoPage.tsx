@@ -5,7 +5,7 @@ import { Page, Prefix, Grade, Student } from '../types';
 
 const StudentInfoPage: React.FC = () => {
   const { setPage, activeExam } = useAppContext();
-  
+
   const [prefix, setPrefix] = useState<Prefix>(Prefix.Boy);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -19,33 +19,33 @@ const StudentInfoPage: React.FC = () => {
     const maxRoom = gradeNumber <= 3 ? 15 : 11;
     return Array.from({ length: maxRoom }, (_, i) => (i + 1).toString());
   }, [grade]);
-  
+
   const numberOptions = Array.from({ length: 45 }, (_, i) => (i + 1).toString());
 
   if (!activeExam) {
     setPage(Page.Home);
     return null;
   }
-  
+
   const proceedToExam = useCallback(() => {
     const student: Student = {
-        prefix,
-        firstName,
-        lastName,
-        grade,
-        room,
-        number,
+      prefix,
+      firstName,
+      lastName,
+      grade,
+      room,
+      number,
     };
     setPage(Page.TakingExam, { student, examId: activeExam.id });
   }, [prefix, firstName, lastName, grade, room, number, setPage, activeExam.id]);
 
   const handleFormSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!firstName.trim() || !lastName.trim()) {
-        alert("กรุณากรอกชื่อและนามสกุล");
-        return;
-      }
-      setShowWarning(true);
+    e.preventDefault();
+    if (!firstName.trim() || !lastName.trim()) {
+      alert("กรุณากรอกชื่อและนามสกุล");
+      return;
+    }
+    setShowWarning(true);
   };
 
   const handleStartExam = () => {

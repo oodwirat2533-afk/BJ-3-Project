@@ -41,6 +41,7 @@ export interface Exam {
   isActive: boolean;
   examCode: string;
   requireFullscreen: boolean;
+  restrictedRoom?: string;
 }
 
 export interface Student {

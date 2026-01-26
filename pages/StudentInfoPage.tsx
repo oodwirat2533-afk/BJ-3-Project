@@ -14,6 +14,13 @@ const StudentInfoPage: React.FC = () => {
   const [number, setNumber] = useState('1');
   const [showWarning, setShowWarning] = useState(false);
 
+  // Handle restricted room logic
+  React.useEffect(() => {
+    if (activeExam?.restrictedRoom) {
+      setRoom(activeExam.restrictedRoom);
+    }
+  }, [activeExam]);
+
   const roomOptions = useMemo(() => {
     const gradeNumber = parseInt(grade.split(' ')[1]);
     const maxRoom = gradeNumber <= 3 ? 15 : 11;
@@ -176,7 +183,8 @@ const StudentInfoPage: React.FC = () => {
                   id="room"
                   value={room}
                   onChange={(e) => setRoom(e.target.value)}
-                  className="shadow-sm appearance-none border rounded w-full py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
+                  disabled={!!activeExam.restrictedRoom}
+                  className={`shadow-sm appearance-none border rounded w-full py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base ${activeExam.restrictedRoom ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                 >
                   {roomOptions.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>

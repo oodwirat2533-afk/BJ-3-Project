@@ -178,6 +178,7 @@ export const updateExamAPI = async (exam: Exam): Promise<Exam> => {
     isActive: data.isActive,
     examCode: data.examCode,
     requireFullscreen: data.requireFullscreen,
+    restrictedRoom: data.restrictedRoom || '',
   };
 
   await updateDoc(doc(db, "exams", id), cleanData);

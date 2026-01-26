@@ -45,64 +45,42 @@ const ErrorScreen: React.FC<{ message: string; onRetry: () => void }> = ({ messa
 const App: React.FC = () => {
   const { page, isLoading, error, retryLoad } = useAppContext();
 
-  const renderPage = () => {
-    switch (page) {
-      case Page.Home:
-        return <HomePage />;
-      case Page.AdminLogin:
-        return <AdminLoginPage />;
-      case Page.AdminDashboard:
-        return <AdminDashboard />;
-      case Page.TeacherLogin:
-        return <TeacherLoginPage />;
-      case Page.TeacherDashboard:
-        return <TeacherDashboard />;
-      case Page.CreateEditExam:
-        return <CreateEditExamPage />;
-      case Page.ExamDashboard:
-        return <ExamDashboardPage />;
-      case Page.StudentInfo:
-        return <StudentInfoPage />;
-      case Page.TakingExam:
-        return <ExamTakingPage />;
-      case Page.StudentResult:
-        return <StudentResultPage />;
-      case Page.StudentAnswerDetail:
-        return <StudentAnswerDetailPage />;
-      case Page.Migration:
-        return <MigrationPage />;
-      default:
-        return <HomePage />;
-    }
-  };
-
-  const MainContent: React.FC = () => {
-    if (isLoading) {
-      return <LoadingScreen />;
-    }
-    if (error) {
-      return <ErrorScreen message={error} onRetry={retryLoad} />;
-    }
-    return (
-      <>
-        <main className="min-h-screen">
-          {renderPage()}
-        </main>
-        <footer className="w-full bg-white shadow-inner py-4 text-center text-sm text-gray-500 mt-8">
-          <div className="flex items-center justify-center gap-2 mb-1">
-            <LogoIcon className="h-6 w-6 text-indigo-500" />
-            <p className="font-bold text-gray-700">โรงเรียนบรรหารแจ่มใสวิทยา 3</p>
-          </div>
-          <p>พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา</p>
-        </footer>
-      </>
-    );
-  };
-
-
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
-      <MainContent />
+      {isLoading ? (
+        <LoadingScreen />
+      ) : error ? (
+        <ErrorScreen message={error} onRetry={retryLoad} />
+      ) : (
+        <>
+          <main className="min-h-screen">
+            {(() => {
+              switch (page) {
+                case Page.Home: return <HomePage />;
+                case Page.AdminLogin: return <AdminLoginPage />;
+                case Page.AdminDashboard: return <AdminDashboard />;
+                case Page.TeacherLogin: return <TeacherLoginPage />;
+                case Page.TeacherDashboard: return <TeacherDashboard />;
+                case Page.CreateEditExam: return <CreateEditExamPage />;
+                case Page.ExamDashboard: return <ExamDashboardPage />;
+                case Page.StudentInfo: return <StudentInfoPage />;
+                case Page.TakingExam: return <ExamTakingPage />;
+                case Page.StudentResult: return <StudentResultPage />;
+                case Page.StudentAnswerDetail: return <StudentAnswerDetailPage />;
+                case Page.Migration: return <MigrationPage />;
+                default: return <HomePage />;
+              }
+            })()}
+          </main>
+          <footer className="w-full bg-white shadow-inner py-4 text-center text-sm text-gray-500 mt-8">
+            <div className="flex items-center justify-center gap-2 mb-1">
+              <LogoIcon className="h-6 w-6 text-indigo-500" />
+              <p className="font-bold text-gray-700">โรงเรียนบรรหารแจ่มใสวิทยา 3</p>
+            </div>
+            <p>พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา</p>
+          </footer>
+        </>
+      )}
     </div>
   );
 };

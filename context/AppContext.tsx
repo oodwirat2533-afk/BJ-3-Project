@@ -1,7 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { Page, Teacher, Exam, ExamResult, Student } from '../types';
-import { 
+import {
   fetchData,
   addTeacherAPI, updateTeacherAPI, deleteTeacherAPI,
   addExamAPI, updateExamAPI, deleteExamAPI,
@@ -29,7 +29,7 @@ interface AppContextType {
   selectedSubject: string | null;
   returnPath: { page: Page; context?: any } | null;
   examDashboardFilters: { room: string; sortBy: 'number' | 'score' | 'date'; score: string };
-  
+
   // Actions
   setPage: (page: Page, context?: any) => void;
   goBack: () => void;
@@ -42,17 +42,17 @@ interface AppContextType {
   updateTeacherPassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   setSelectedSubject: (subject: string | null) => void;
   setExamDashboardFilters: (filters: AppContextType['examDashboardFilters']) => void;
-  
+
   // Teacher Actions
   addTeacher: (teacher: Omit<Teacher, 'id' | 'approved'>) => Promise<void>;
   updateTeacher: (teacher: Teacher) => Promise<void>;
   deleteTeacher: (teacherId: string) => Promise<void>;
-  
+
   // Exam Actions
   addExam: (exam: Omit<Exam, 'id'>) => Promise<Exam | null>;
   updateExam: (exam: Exam) => Promise<void>;
   deleteExam: (examId: string) => Promise<void>;
-  
+
   // Result Actions
   addResult: (result: Omit<ExamResult, 'id' | 'submittedAt'>) => Promise<void>;
   deleteResult: (resultId: string) => Promise<void>;
@@ -85,7 +85,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [returnPath, setReturnPath] = useState<{ page: Page; context?: any } | null>(null);
   const [examDashboardFilters, setExamDashboardFilters] = useState(defaultExamDashboardFilters);
-  
+
   // Effect for initial data loading from the online database
   useEffect(() => {
     const loadData = async () => {
@@ -101,20 +101,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // Check for saved user session after data is loaded
         const savedUserJson = localStorage.getItem('loggedInUser');
         if (savedUserJson) {
-            const savedUser = JSON.parse(savedUserJson);
-            if (savedUser.type === 'admin') {
-                setLoggedInUser('admin');
-                setPageState(Page.AdminDashboard);
-            } else if (savedUser.type === 'teacher' && savedUser.id) {
-                const foundTeacher = data.teachers.find(t => t.id === savedUser.id);
-                if (foundTeacher && foundTeacher.approved) {
-                    setLoggedInUser(foundTeacher);
-                    setPageState(Page.TeacherDashboard);
-                } else {
-                    // Clear invalid session if teacher not found or not approved
-                    localStorage.removeItem('loggedInUser');
-                }
+          const savedUser = JSON.parse(savedUserJson);
+          if (savedUser.type === 'admin') {
+            setLoggedInUser('admin');
+            setPageState(Page.AdminDashboard);
+          } else if (savedUser.type === 'teacher' && savedUser.id) {
+            const foundTeacher = data.teachers.find(t => t.id === savedUser.id);
+            if (foundTeacher && foundTeacher.approved) {
+              setLoggedInUser(foundTeacher);
+              setPageState(Page.TeacherDashboard);
+            } else {
+              // Clear invalid session if teacher not found or not approved
+              localStorage.removeItem('loggedInUser');
             }
+          }
         }
       } catch (err: any) {
         setError(err.message);
@@ -131,55 +131,79 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     // These listeners are for globally needed data (teachers, exams, config)
     const unsubTeachers = onSnapshot(teachersCol, (snapshot) => {
-        setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher)));
+      setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher)));
     }, (err) => console.error("Real-time teachers update failed:", err));
-    
+
     const unsubExams = onSnapshot(examsCol, (snapshot) => {
-        setExams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam)));
+      setExams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam)));
     }, (err) => console.error("Real-time exams update failed:", err));
 
     const unsubConfig = onSnapshot(configCol, (snapshot) => {
-        if (!snapshot.empty) {
-            setAdminPassword(snapshot.docs[0].data().adminPassword);
-        }
+      if (!snapshot.empty) {
+        setAdminPassword(snapshot.docs[0].data().adminPassword);
+      }
     }, (err) => console.error("Real-time config update failed:", err));
 
     // ** FIX **: Conditionally listen for results only on pages that need it.
     // This prevents students taking an exam from re-rendering when another student submits a result.
-    let unsubResults = () => {}; // No-op function by default
+    let unsubResults = () => { }; // No-op function by default
     if (page === Page.ExamDashboard || page === Page.StudentAnswerDetail) {
-        unsubResults = onSnapshot(resultsCol, (snapshot) => {
-            setResults(snapshot.docs.map(doc => {
-                const data = doc.data();
-                if (data.submittedAt && data.submittedAt instanceof Timestamp) {
-                    data.submittedAt = data.submittedAt.toDate();
-                }
-                return { id: doc.id, ...data } as ExamResult;
-            }));
-        }, (err) => console.error("Real-time results update failed:", err));
+      unsubResults = onSnapshot(resultsCol, (snapshot) => {
+        setResults(snapshot.docs.map(doc => {
+          const data = doc.data();
+          if (data.submittedAt && data.submittedAt instanceof Timestamp) {
+            data.submittedAt = data.submittedAt.toDate();
+          }
+          return { id: doc.id, ...data } as ExamResult;
+        }));
+      }, (err) => console.error("Real-time results update failed:", err));
     }
 
     // Cleanup listeners on component unmount or when page changes
     return () => {
-        unsubTeachers();
-        unsubExams();
-        unsubConfig();
-        unsubResults();
+      unsubTeachers();
+      unsubExams();
+      unsubConfig();
+      unsubResults();
     };
   }, [isLoading, error, page]); // Add 'page' to dependency array to re-evaluate listeners on page change
 
 
   const retryLoad = () => setRetryCount(prev => prev + 1);
 
-  const activeExam = exams.find(e => e.id === activeExamId) || null;
-  
+  const activeExamRef = React.useRef<Exam | null>(null);
+  const activeExam = useMemo(() => {
+    const found = exams.find(e => e.id === activeExamId) || null;
+
+    // If nothing found, return null
+    if (!found) {
+      activeExamRef.current = null;
+      return null;
+    }
+
+    // If the content hasn't changed (ID + Title + Subject + Questions Length), keep the same object
+    // This prevents downstream re-renders when unrelated exams are updated.
+    const prev = activeExamRef.current;
+    if (prev && prev.id === found.id &&
+      prev.questions.length === found.questions.length &&
+      prev.timeLimit === found.timeLimit &&
+      prev.examCode === found.examCode &&
+      prev.requireFullscreen === found.requireFullscreen
+    ) {
+      return prev;
+    }
+
+    activeExamRef.current = found;
+    return found;
+  }, [exams, activeExamId]);
+
   const stableSetSelectedSubject = useCallback((subject: string | null) => {
     setSelectedSubject(subject);
   }, []);
 
   const setPage = useCallback((newPage: Page, context?: any) => {
     const { returnTo, ...restContext } = context || {};
-    
+
     if (returnTo) {
       setReturnPath(returnTo);
     } else if (newPage !== Page.CreateEditExam) {
@@ -195,26 +219,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (restContext?.examId !== undefined) setActiveExamId(restContext.examId);
     else if (![Page.CreateEditExam, Page.ExamDashboard, Page.StudentInfo, Page.TakingExam, Page.StudentAnswerDetail].includes(newPage)) setActiveExamId(null);
-    
+
     // ** FINAL FIX **: Rely ONLY on the passed 'result' object.
     // The component calling setPage (Student or Teacher) is responsible for providing the full object.
     // This removes the dependency on the global 'results' array, making this function stable.
     if (restContext?.result) {
-        setActiveResult(restContext.result);
+      setActiveResult(restContext.result);
     } else if (![Page.StudentResult, Page.StudentAnswerDetail].includes(newPage)) {
-        // Clear activeResult when navigating away from result pages
-        setActiveResult(null);
+      // Clear activeResult when navigating away from result pages
+      setActiveResult(null);
     }
 
 
     if (restContext?.student) setActiveStudent(restContext.student);
     else if (newPage !== Page.TakingExam) setActiveStudent(null);
-    
+
     if (restContext?.subject !== undefined) {
-        setSelectedSubject(restContext.subject);
+      setSelectedSubject(restContext.subject);
     } else if (newPage !== Page.TeacherDashboard && newPage !== Page.CreateEditExam) {
-        // Clear subject when navigating away completely
-        setSelectedSubject(null);
+      // Clear subject when navigating away completely
+      setSelectedSubject(null);
     }
 
     setPageState(newPage);
@@ -223,10 +247,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const goBack = useCallback(() => {
     if (returnPath) {
-        setPage(returnPath.page, returnPath.context);
+      setPage(returnPath.page, returnPath.context);
     } else {
-        // Sensible fallback
-        setPage(Page.TeacherDashboard);
+      // Sensible fallback
+      setPage(Page.TeacherDashboard);
     }
   }, [returnPath, setPage]);
 
@@ -275,7 +299,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!loggedInUser || loggedInUser === 'admin') {
       return { success: false, message: 'ไม่มีผู้ใช้งานเข้าสู่ระบบ' };
     }
-    
+
     const teacher = loggedInUser as Teacher;
 
     if (currentPassword !== teacher.password) {
@@ -293,7 +317,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตรหัสผ่าน' };
     }
   }, [loggedInUser, updateTeacher]);
-  
+
   const addTeacher = useCallback(async (teacherData: Omit<Teacher, 'id' | 'approved'>) => {
     try {
       const newTeacherData = { ...teacherData, approved: false };
@@ -306,7 +330,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await deleteTeacherAPI(teacherId);
     } catch (error) { console.error("Failed to delete teacher:", error); }
   }, []);
-  
+
   const addExam = useCallback(async (examData: Omit<Exam, 'id'>): Promise<Exam | null> => {
     try {
       const newExamFromAPI = await addExamAPI(examData);
@@ -330,7 +354,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await deleteExamAPI(examId);
     } catch (error) { console.error("Failed to delete exam and its results:", error); }
   }, [results]);
-  
+
   const addResult = useCallback(async (resultData: Omit<ExamResult, 'id' | 'submittedAt'>) => {
     try {
       const newResultFromAPI = await addResultAPI(resultData);
@@ -360,13 +384,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const resultsToDelete = results.filter(r => r.examId === examId && r.student.room === room);
       await Promise.all(resultsToDelete.map(r => deleteResultAPI(r.id)));
-      setExamDashboardFilters(prev => ({...prev, room: 'all'}));
+      setExamDashboardFilters(prev => ({ ...prev, room: 'all' }));
     } catch (error) {
       console.error(`Failed to delete results for exam ${examId} in room ${room}:`, error);
     }
   }, [results]);
 
-  const value = {
+  const value = useMemo(() => ({
     isLoading,
     error,
     page,
@@ -401,7 +425,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     deleteResult,
     deleteResultsForExam,
     deleteResultsForRoom,
-  };
+  }), [
+    isLoading, error, page, teachers, exams, results, loggedInUser,
+    activeExam, activeResult, activeStudent, selectedSubject, returnPath,
+    examDashboardFilters, setPage, goBack, retryLoad, login, logout,
+    updateAdminPassword, updateTeacherPassword, stableSetSelectedSubject,
+    setExamDashboardFilters, addTeacher, updateTeacher, deleteTeacher,
+    addExam, updateExam, deleteExam, addResult, deleteResult,
+    deleteResultsForExam, deleteResultsForRoom
+  ]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

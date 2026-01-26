@@ -42,7 +42,7 @@ const TeacherDashboard: React.FC = () => {
 
   const subjects = useMemo(() => {
     const uniqueSubjects = [...new Set(teacherExams.map(exam => exam.subject))];
-    return uniqueSubjects.sort();
+    return uniqueSubjects.sort((a, b) => (a as string).localeCompare(b as string, 'th'));
   }, [teacherExams]);
 
   const handleNavigateToCreateExam = (subject: string) => {
@@ -81,10 +81,28 @@ const TeacherDashboard: React.FC = () => {
 
   const confirmDeleteExam = async () => {
     if (examToDelete) {
+      const subjectOfDeletedExam = examToDelete.subject;
       await deleteExam(examToDelete.id);
+
+      // Check if there are any remaining exams for this subject
+      const remainingExamsInSubject = teacherExams.filter(
+        e => e.subject === subjectOfDeletedExam && e.id !== examToDelete.id
+      );
+
+      if (remainingExamsInSubject.length === 0) {
+        setSelectedSubject(null);
+      }
+
       setExamToDelete(null);
     }
   };
+
+  // Auto-close subject folder if it becomes empty (e.g., after deletion)
+  React.useEffect(() => {
+    if (selectedSubject && subjects.length > 0 && !subjects.includes(selectedSubject)) {
+      setSelectedSubject(null);
+    }
+  }, [subjects, selectedSubject, setSelectedSubject]);
 
   const handlePasswordModalClose = () => {
     setIsPasswordModalOpen(false);
@@ -135,9 +153,12 @@ const TeacherDashboard: React.FC = () => {
     });
   };
 
-  const examsInSelectedSubject = selectedSubject
-    ? teacherExams.filter(exam => exam.subject === selectedSubject)
-    : [];
+  const examsInSelectedSubject = useMemo(() => {
+    if (!selectedSubject) return [];
+    return teacherExams
+      .filter(exam => exam.subject === selectedSubject)
+      .sort((a, b) => a.title.localeCompare(b.title, 'th'));
+  }, [teacherExams, selectedSubject]);
 
   const renderExamCards = (examList: Exam[]) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

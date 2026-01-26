@@ -37,11 +37,14 @@ const ExamTakingPage: React.FC = () => {
         return newArray;
     };
 
-    const startNewTest = useCallback(() => {
-        if (activeExam) {
+    const [localExam, setLocalExam] = useState<typeof activeExam>(null);
+    const hasInitialized = useRef(false);
+
+    const startNewTest = useCallback((examToUse: typeof activeExam) => {
+        if (examToUse) {
             // 1. Shuffle questions
-            const shuffled = shuffleArray(activeExam.questions);
-            const selectedQuestions = shuffled.slice(0, activeExam.totalQuestions);
+            const shuffled = shuffleArray(examToUse.questions);
+            const selectedQuestions = shuffled.slice(0, examToUse.totalQuestions);
 
             // 2. Create shuffled order for options for each question
             const newOrders: Record<string, number[]> = {};
@@ -52,21 +55,25 @@ const ExamTakingPage: React.FC = () => {
 
             setCurrentQuestions(selectedQuestions);
             setAnswers(selectedQuestions.map((q: Question) => ({ questionId: q.id, selectedAnswerIndex: null })));
-            setTimeLeft(activeExam.timeLimit * 60);
+            setTimeLeft(examToUse.timeLimit * 60);
             setCurrentQuestionIndex(0);
             setIsInitialized(true);
+            hasInitialized.current = true;
         }
-    }, [activeExam]);
+    }, []);
 
     useEffect(() => {
         if (!student) {
             setPage(Page.Home);
             return;
         }
-        if (!isInitialized) {
-            startNewTest();
+
+        // Initialize from activeExam once and ONLY once
+        if (activeExam && !localExam && !hasInitialized.current) {
+            setLocalExam(activeExam);
+            startNewTest(activeExam);
         }
-    }, [startNewTest, student, setPage, isInitialized]);
+    }, [activeExam, student, setPage, localExam, startNewTest]);
 
     const handleReEnterFullscreen = () => {
         const elem = document.documentElement as any;
@@ -112,9 +119,11 @@ const ExamTakingPage: React.FC = () => {
         const handleFullscreenChange = () => {
             if (isSubmitting.current) return;
 
-            if (isInitialized && !getFullscreenElement()) {
+            // Only trigger reset if we WERE in fullscreen and now we are NOT.
+            // This prevents resets during simple React re-renders.
+            if (hasInitialized.current && !getFullscreenElement()) {
                 setShowFullscreenWarning(true);
-                startNewTest();
+                if (localExam) startNewTest(localExam);
             }
         };
 
@@ -140,7 +149,7 @@ const ExamTakingPage: React.FC = () => {
     }, []);
 
     const handleCheating = useCallback(() => {
-        if (showCheatWarning || !isInitialized) return;
+        if (showCheatWarning || !hasInitialized.current) return;
 
         setShowCheatWarning(true);
         setCheatCountdown(5);
@@ -152,9 +161,9 @@ const ExamTakingPage: React.FC = () => {
         warningTimers.current.timeout = window.setTimeout(() => {
             cancelCheatingWarning();
             alert("คุณออกจากหน้าจอสอบนานเกินไป หรือพยายามทุจริต! ระบบจะทำการเริ่มข้อสอบใหม่");
-            startNewTest();
+            if (localExam) startNewTest(localExam);
         }, 5000);
-    }, [showCheatWarning, isInitialized, startNewTest, cancelCheatingWarning]);
+    }, [showCheatWarning, localExam, startNewTest, cancelCheatingWarning]);
 
     useAntiCheat(handleCheating, true);
 
@@ -186,20 +195,23 @@ const ExamTakingPage: React.FC = () => {
         }
 
         let score = 0;
+        const examData = localExam || activeExam;
+        if (!examData) return;
+
         answers.forEach(answer => {
-            const question = activeExam.questions.find(q => q.id === answer.questionId);
+            const question = examData.questions.find(q => q.id === answer.questionId);
             if (question && question.correctAnswerIndex === answer.selectedAnswerIndex) {
                 score++;
             }
         });
         addResult({
-            examId: activeExam.id,
+            examId: examData.id,
             student,
             score,
-            total: activeExam.totalQuestions,
+            total: examData.totalQuestions,
             answers
         });
-    }, [student, activeExam, answers, addResult]);
+    }, [student, activeExam, localExam, answers, addResult]);
 
     useEffect(() => {
         if (!isInitialized) return;

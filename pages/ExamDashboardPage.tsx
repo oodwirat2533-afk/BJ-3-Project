@@ -217,16 +217,17 @@ const ExamDashboardPage: React.FC = () => {
                   <DownloadIcon className="w-4 h-4" />
                   <span>ส่งออกเป็น CSV</span>
                 </button>
-                {examDashboardFilters.room !== 'all' && (
+                {examDashboardFilters.room !== 'all' ? (
                   <button onClick={handleDeleteResultsForRoom} className="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg">
                     <TrashIcon className="w-4 h-4" />
                     <span>ลบผลสอบห้อง {examDashboardFilters.room}</span>
                   </button>
+                ) : (
+                  <button onClick={handleDeleteAllResults} className="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg">
+                    <TrashIcon className="w-4 h-4" />
+                    <span>ลบผลสอบทั้งหมด</span>
+                  </button>
                 )}
-                <button onClick={handleDeleteAllResults} className="flex items-center gap-2 text-sm font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-2 rounded-lg">
-                  <TrashIcon className="w-4 h-4" />
-                  <span>ลบผลสอบทั้งหมด</span>
-                </button>
               </div>
             )}
           </div>

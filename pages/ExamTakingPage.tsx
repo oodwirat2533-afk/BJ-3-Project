@@ -63,8 +63,10 @@ const ExamTakingPage: React.FC = () => {
             setPage(Page.Home);
             return;
         }
-        startNewTest();
-    }, [startNewTest, student, setPage]);
+        if (!isInitialized) {
+            startNewTest();
+        }
+    }, [startNewTest, student, setPage, isInitialized]);
 
     const handleReEnterFullscreen = () => {
         const elem = document.documentElement as any;

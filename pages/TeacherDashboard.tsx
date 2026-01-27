@@ -240,10 +240,12 @@ const TeacherDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
       <header className="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4">
-        <div className="flex items-center gap-3">
-          <TeacherIcon className="h-10 w-10 text-indigo-600" />
+        <div className="flex items-center gap-4">
+          <div className="bg-indigo-100 p-2.5 rounded-xl">
+            <TeacherIcon className="h-10 w-10 text-indigo-600" />
+          </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">แผงควบคุมครู</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">แผงควบคุมครู</h1>
             <p className="text-gray-500 mt-2">ยินดีต้อนรับ {teacher.name}</p>
           </div>
         </div>
@@ -280,7 +282,7 @@ const TeacherDashboard: React.FC = () => {
             {selectedSubject && (
               <button
                 onClick={() => setSelectedSubject(null)}
-                className="flex items-center gap-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 px-4 py-2 rounded-lg shadow-sm border border-gray-300 transition-colors mr-4"
+                className="flex items-center gap-2 text-sm font-semibold text-gray-700 bg-white hover:bg-gray-100 px-4 py-2 rounded-lg shadow-sm border border-gray-300 transition-colors mr-4 whitespace-nowrap"
               >
                 <ArrowLeftIcon className="w-4 h-4" />
                 <span>กลับไปที่รายวิชา</span>

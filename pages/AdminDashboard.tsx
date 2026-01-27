@@ -109,8 +109,8 @@ const AdminDashboard: React.FC = () => {
                         <AdminIcon className="h-10 w-10 text-indigo-600" />
                     </div>
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 leading-tight mb-1 md:mb-2">แผงควบคุมผู้ดูแลระบบ</h1>
-                        <p className="text-sm sm:text-base text-gray-500">จัดการบัญชีผู้ใช้งานครูและตั้งค่าระบบ</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">แผงควบคุมผู้ดูแลระบบ</h1>
+                        <p className="text-gray-500 mt-2">จัดการบัญชีผู้ใช้งานครูและตั้งค่าระบบ</p>
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">

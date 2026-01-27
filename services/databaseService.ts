@@ -11,7 +11,6 @@ import {
   Timestamp
 } from "firebase/firestore";
 import { db } from './firebaseConfig';
-import { initialTeachers, initialExams, initialResults } from '../context/initialData';
 import { Teacher, Exam, ExamResult } from '../types';
 
 export interface AppData {
@@ -27,37 +26,6 @@ export const examsCol = collection(db, "exams");
 export const resultsCol = collection(db, "results");
 export const configCol = collection(db, "app_config");
 
-// --- Seeding Logic for Firestore ---
-const seedDatabase = async (): Promise<AppData> => {
-  console.log("Database is empty. Seeding with initial data...");
-  const batch = writeBatch(db);
-
-  // Seed teachers
-  initialTeachers.forEach(teacher => {
-    const docRef = doc(db, "teachers", teacher.id);
-    batch.set(docRef, teacher);
-  });
-
-  // Seed exams
-  initialExams.forEach(exam => {
-    const docRef = doc(db, "exams", exam.id);
-    batch.set(docRef, exam);
-  });
-
-  // Seed admin password
-  const configRef = doc(db, "app_config", "main_config");
-  batch.set(configRef, { adminPassword: '1234' });
-
-  await batch.commit();
-
-  console.log("Seeding complete.");
-  return {
-    teachers: initialTeachers,
-    exams: initialExams,
-    results: initialResults, // Results start empty
-    adminPassword: '1234'
-  };
-};
 
 // --- Firestore Data Fetching ---
 export const fetchData = async (): Promise<AppData> => {
@@ -81,8 +49,13 @@ export const fetchData = async (): Promise<AppData> => {
     ]);
 
     if (configSnap.empty) {
-      console.log("No config found, assuming first run.");
-      return await seedDatabase();
+      console.log("No config found. Application might not be initialized.");
+      return {
+        teachers: [],
+        exams: [],
+        results: [],
+        adminPassword: ''
+      };
     }
 
     const teachers = teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));

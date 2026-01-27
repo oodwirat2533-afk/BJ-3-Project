@@ -114,6 +114,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+
                     <button onClick={() => setIsAddTeacherModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-3 md:py-2.5 rounded-xl shadow-lg transition-all active:scale-95">
                         <span>+ เพิ่มครูใหม่</span>
                     </button>
@@ -348,7 +349,7 @@ const AdminDashboard: React.FC = () => {
             {teacherToDelete && (
                 <ConfirmationModal
                     title="ยืนยันการลบครู"
-                    message={`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${teacherToDelete.name}"? การกระทำนี้ไม่สามารถย้อนกลับได้`}
+                    message={`คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีของ "${teacherToDelete.name}"? ข้อสอบและผลการสอบทั้งหมดของครูท่านนี้จะถูกลบออกด้วยถาวร และการกระทำนี้ไม่สามารถย้อนกลับได้`}
                     onConfirm={confirmDeleteTeacher}
                     onCancel={() => setTeacherToDelete(null)}
                 />

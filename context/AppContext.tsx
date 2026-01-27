@@ -325,11 +325,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (error) { console.error("Failed to add teacher:", error); }
   }, []);
 
-  const deleteTeacher = useCallback(async (teacherId: string) => {
-    try {
-      await deleteTeacherAPI(teacherId);
-    } catch (error) { console.error("Failed to delete teacher:", error); }
-  }, []);
 
   const addExam = useCallback(async (examData: Omit<Exam, 'id'>): Promise<Exam | null> => {
     try {
@@ -354,6 +349,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await deleteExamAPI(examId);
     } catch (error) { console.error("Failed to delete exam and its results:", error); }
   }, [results]);
+
+  const deleteTeacher = useCallback(async (teacherId: string) => {
+    try {
+      // Cascading delete: Find and delete all exams belonging to this teacher
+      const examsToDelete = exams.filter(e => e.teacherId === teacherId);
+      // deleteExam already handles deleting results for each exam
+      await Promise.all(examsToDelete.map(e => deleteExam(e.id)));
+
+      await deleteTeacherAPI(teacherId);
+    } catch (error) { console.error("Failed to delete teacher and their data:", error); }
+  }, [exams, deleteExam]);
 
   const addResult = useCallback(async (resultData: Omit<ExamResult, 'id' | 'submittedAt'>) => {
     try {

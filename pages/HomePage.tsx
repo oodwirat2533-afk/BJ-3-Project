@@ -55,16 +55,13 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-4">
+    <div className="flex-grow flex flex-col items-center pt-8 md:pt-16 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 animate-fade-in-down">
           <LogoIcon className="h-20 w-20 mx-auto text-indigo-500" />
           <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mt-4">
             ระบบข้อสอบออนไลน์
           </h1>
-          <p className="text-gray-600 text-lg">
-            โรงเรียนบรรหารแจ่มใสวิทยา 3
-          </p>
         </div>
 
         <div className="bg-white rounded-xl shadow-2xl p-6 md:p-8 transform transition-all hover:scale-105 duration-500 animate-fade-in-up">

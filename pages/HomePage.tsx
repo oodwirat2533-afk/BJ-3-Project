@@ -55,19 +55,19 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="flex-grow flex flex-col items-center justify-center p-4">
+    <div className="flex-grow flex flex-col items-center justify-start md:justify-center p-4 pt-[10vh] md:pt-0">
       <div className="w-full max-w-md text-center">
-        <div className="mb-8 animate-fade-in-down">
-          <LogoIcon className="h-20 w-20 mx-auto text-indigo-500" />
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mt-4">
+        <div className="mb-2 md:mb-8 animate-fade-in-down">
+          <LogoIcon className="h-24 w-24 md:h-20 md:w-20 mx-auto text-indigo-500" />
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mt-2">
             ระบบข้อสอบออนไลน์
           </h1>
         </div>
 
         <div className="bg-white rounded-xl shadow-2xl p-6 md:p-8 transform transition-all hover:scale-105 duration-500 animate-fade-in-up">
-          <div className="flex items-center justify-center mb-6">
-            <StudentIcon className="h-8 w-8 text-indigo-500" />
-            <h2 className="text-2xl font-semibold text-gray-700 ml-3">สำหรับนักเรียน</h2>
+          <div className="flex items-center justify-center mb-4 md:mb-6">
+            <StudentIcon className="h-7 w-7 md:h-8 md:w-8 text-indigo-500" />
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-700 ml-3">สำหรับนักเรียน</h2>
           </div>
           <form onSubmit={handleStartExam}>
             <div className="mb-4">
@@ -96,26 +96,26 @@ const HomePage: React.FC = () => {
           </form>
         </div>
 
-        <div className="mt-8 flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-          <div className="flex justify-center items-center space-x-4 mb-4">
+        <div className="mt-4 md:mt-8 flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="flex justify-center items-center space-x-4 mb-3 md:mb-4">
             <button
               onClick={() => setPage(Page.TeacherLogin)}
-              className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+              className="flex items-center text-sm md:text-base text-gray-600 hover:text-indigo-600 transition-colors"
             >
-              <TeacherIcon className="h-5 w-5 mr-1" />
+              <TeacherIcon className="h-4 w-4 md:h-5 md:w-5 mr-1" />
               <span>สำหรับครู</span>
             </button>
             <span className="text-gray-300">|</span>
             <button
               onClick={() => setPage(Page.AdminLogin)}
-              className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+              className="flex items-center text-sm md:text-base text-gray-600 hover:text-indigo-600 transition-colors"
             >
-              <AdminIcon className="h-5 w-5 mr-1" />
+              <AdminIcon className="h-4 w-4 md:h-5 md:w-5 mr-1" />
               <span>สำหรับผู้ดูแลระบบ</span>
             </button>
           </div>
 
-          <div className="text-sm text-indigo-700 font-semibold mt-2">
+          <div className="text-sm text-indigo-700 font-semibold mt-1">
             พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา
           </div>
         </div>

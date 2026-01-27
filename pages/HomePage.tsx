@@ -55,7 +55,7 @@ const HomePage: React.FC = () => {
   };
 
   return (
-    <div className="flex-grow flex flex-col items-center pt-8 md:pt-16 bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 p-4">
+    <div className="flex-grow flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md text-center">
         <div className="mb-8 animate-fade-in-down">
           <LogoIcon className="h-20 w-20 mx-auto text-indigo-500" />
@@ -96,22 +96,28 @@ const HomePage: React.FC = () => {
           </form>
         </div>
 
-        <div className="mt-8 flex justify-center items-center space-x-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-          <button
-            onClick={() => setPage(Page.TeacherLogin)}
-            className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
-          >
-            <TeacherIcon className="h-5 w-5 mr-1" />
-            <span>สำหรับครู</span>
-          </button>
-          <span className="text-gray-300">|</span>
-          <button
-            onClick={() => setPage(Page.AdminLogin)}
-            className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
-          >
-            <AdminIcon className="h-5 w-5 mr-1" />
-            <span>สำหรับผู้ดูแลระบบ</span>
-          </button>
+        <div className="mt-8 flex flex-col items-center animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <div className="flex justify-center items-center space-x-4 mb-4">
+            <button
+              onClick={() => setPage(Page.TeacherLogin)}
+              className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+            >
+              <TeacherIcon className="h-5 w-5 mr-1" />
+              <span>สำหรับครู</span>
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              onClick={() => setPage(Page.AdminLogin)}
+              className="flex items-center text-gray-600 hover:text-indigo-600 transition-colors"
+            >
+              <AdminIcon className="h-5 w-5 mr-1" />
+              <span>สำหรับผู้ดูแลระบบ</span>
+            </button>
+          </div>
+
+          <div className="text-sm text-indigo-700 font-semibold mt-2">
+            พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา
+          </div>
         </div>
 
 

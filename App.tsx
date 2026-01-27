@@ -46,14 +46,14 @@ const App: React.FC = () => {
   const { page, isLoading, error, retryLoad } = useAppContext();
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-800">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 text-gray-800">
       {isLoading ? (
         <LoadingScreen />
       ) : error ? (
         <ErrorScreen message={error} onRetry={retryLoad} />
       ) : (
         <>
-          <main className="flex-grow">
+          <main className="flex-grow flex flex-col">
             {(() => {
               switch (page) {
                 case Page.Home: return <HomePage />;
@@ -72,9 +72,6 @@ const App: React.FC = () => {
               }
             })()}
           </main>
-          <footer className="w-full bg-white shadow-inner py-4 text-center text-sm text-gray-500">
-            <p>พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา</p>
-          </footer>
         </>
       )}
     </div>

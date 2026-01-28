@@ -119,6 +119,7 @@ export const updateTeacherAPI = async (teacher: Teacher): Promise<Teacher> => {
     email: data.email,
     approved: data.approved,
     password: data.password,
+    schoolName: data.schoolName || '',
   };
   await updateDoc(doc(db, "teachers", id), cleanData);
   return teacher;
@@ -152,6 +153,7 @@ export const updateExamAPI = async (exam: Exam): Promise<Exam> => {
     examCode: data.examCode,
     requireFullscreen: data.requireFullscreen,
     restrictedRoom: data.restrictedRoom || '',
+    accessKey: data.accessKey || '',
   };
 
   await updateDoc(doc(db, "exams", id), cleanData);

@@ -1,17 +1,18 @@
 
 export enum Page {
-  Home,
-  AdminLogin,
-  AdminDashboard,
-  TeacherLogin,
-  TeacherDashboard,
-  CreateEditExam,
-  ExamDashboard,
-  StudentInfo,
-  TakingExam,
-  StudentResult,
-  StudentAnswerDetail,
-  Migration,
+  Home = 'home',
+  AdminDashboard = 'admin-dashboard',
+  StaffLogin = 'staff-login',
+  AdminLogin = 'admin-login',
+  TeacherDashboard = 'teacher-dashboard',
+  TeacherLogin = 'teacher-login',
+  CreateEditExam = 'create-edit-exam',
+  ExamDashboard = 'exam-dashboard',
+  StudentInfo = 'student-info',
+  TakingExam = 'taking-exam',
+  StudentResult = 'student-result',
+  StudentAnswerDetail = 'student-answer-detail',
+  Migration = 'migration',
 }
 
 export interface Teacher {
@@ -20,6 +21,7 @@ export interface Teacher {
   email: string;
   approved: boolean;
   password: string;
+  schoolName?: string;
 }
 
 export interface Question {
@@ -40,8 +42,10 @@ export interface Exam {
   minSubmitTime: number; // in minutes
   isActive: boolean;
   examCode: string;
-  requireFullscreen: boolean;
+  requireFullscreen?: boolean;
   restrictedRoom?: string;
+  schoolName?: string;
+  accessKey?: string;
 }
 
 export interface Student {

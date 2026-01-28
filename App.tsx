@@ -2,9 +2,7 @@
 import React from 'react';
 import { useAppContext } from './context/AppContext';
 import HomePage from './pages/HomePage';
-import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboard from './pages/AdminDashboard';
-import TeacherLoginPage from './pages/TeacherLoginPage';
 import TeacherDashboard from './pages/TeacherDashboard';
 import CreateEditExamPage from './pages/CreateEditExamPage';
 import ExamDashboardPage from './pages/ExamDashboardPage';
@@ -56,10 +54,11 @@ const App: React.FC = () => {
           <main className="flex-grow flex flex-col">
             {(() => {
               switch (page) {
-                case Page.Home: return <HomePage />;
-                case Page.AdminLogin: return <AdminLoginPage />;
+                case Page.Home:
+                case Page.StaffLogin:
+                case Page.AdminLogin:
+                case Page.TeacherLogin: return <HomePage />;
                 case Page.AdminDashboard: return <AdminDashboard />;
-                case Page.TeacherLogin: return <TeacherLoginPage />;
                 case Page.TeacherDashboard: return <TeacherDashboard />;
                 case Page.CreateEditExam: return <CreateEditExamPage />;
                 case Page.ExamDashboard: return <ExamDashboardPage />;

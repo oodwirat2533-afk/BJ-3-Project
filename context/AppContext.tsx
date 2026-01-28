@@ -102,14 +102,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const savedUserJson = localStorage.getItem('loggedInUser');
         if (savedUserJson) {
           const savedUser = JSON.parse(savedUserJson);
+
+          // Check URL for personalized parameters to decide whether to skip dashboard redirect
+          const params = new URLSearchParams(window.location.search);
+          const hasPersonalizedParams = params.has('tid') || params.has('ec') || params.has('code');
+
           if (savedUser.type === 'admin') {
             setLoggedInUser('admin');
-            setPageState(Page.AdminDashboard);
+            // Only redirect to dashboard if not viewing a personalized link
+            if (!hasPersonalizedParams) setPageState(Page.AdminDashboard);
           } else if (savedUser.type === 'teacher' && savedUser.id) {
             const foundTeacher = data.teachers.find(t => t.id === savedUser.id);
             if (foundTeacher && foundTeacher.approved) {
               setLoggedInUser(foundTeacher);
-              setPageState(Page.TeacherDashboard);
+              // Only redirect to dashboard if not viewing a personalized link
+              if (!hasPersonalizedParams) setPageState(Page.TeacherDashboard);
             } else {
               // Clear invalid session if teacher not found or not approved
               localStorage.removeItem('loggedInUser');
@@ -129,7 +136,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     if (isLoading || error) return; // Don't attach listeners until initial load is successful
 
-    // These listeners are for globally needed data (teachers, exams, config)
+    // 1. Core listeners (Teachers, Exams, Config) - Global data that doesn't depend on the current page
     const unsubTeachers = onSnapshot(teachersCol, (snapshot) => {
       setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher)));
     }, (err) => console.error("Real-time teachers update failed:", err));
@@ -144,9 +151,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     }, (err) => console.error("Real-time config update failed:", err));
 
-    // ** FIX **: Conditionally listen for results only on pages that need it.
-    // This prevents students taking an exam from re-rendering when another student submits a result.
-    let unsubResults = () => { }; // No-op function by default
+    return () => {
+      unsubTeachers();
+      unsubExams();
+      unsubConfig();
+    };
+  }, [isLoading, error]); // Only re-run if loading state or error changes (usually once)
+
+  // Separate effect for Results listener - This one DOES depend on the current page
+  useEffect(() => {
+    if (isLoading || error) return;
+
+    let unsubResults = () => { };
     if (page === Page.ExamDashboard || page === Page.StudentAnswerDetail) {
       unsubResults = onSnapshot(resultsCol, (snapshot) => {
         setResults(snapshot.docs.map(doc => {
@@ -159,14 +175,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }, (err) => console.error("Real-time results update failed:", err));
     }
 
-    // Cleanup listeners on component unmount or when page changes
-    return () => {
-      unsubTeachers();
-      unsubExams();
-      unsubConfig();
-      unsubResults();
-    };
-  }, [isLoading, error, page]); // Add 'page' to dependency array to re-evaluate listeners on page change
+    return () => unsubResults();
+  }, [isLoading, error, page]);
 
 
   const retryLoad = () => setRetryCount(prev => prev + 1);

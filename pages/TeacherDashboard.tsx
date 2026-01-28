@@ -1,8 +1,10 @@
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { Page, Teacher, Exam } from '../types';
-import { LogoutIcon, EditIcon, TrashIcon, TeacherIcon, FolderIcon, ArrowLeftIcon, KeyIcon, CopyIcon, CheckCircleIcon } from '../components/Icons';
+import {
+  TeacherIcon, FolderIcon, SchoolIcon, LinkIcon, KeyIcon, LogoutIcon, EditIcon, TrashIcon,
+  CopyIcon, CheckCircleIcon, ArrowLeftIcon, RefreshIcon
+} from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const TeacherDashboard: React.FC = () => {
@@ -15,7 +17,8 @@ const TeacherDashboard: React.FC = () => {
     logout,
     selectedSubject,
     setSelectedSubject,
-    updateTeacherPassword
+    updateTeacherPassword,
+    updateTeacher
   } = useAppContext();
 
   const [examToDelete, setExamToDelete] = useState<Exam | null>(null);
@@ -31,6 +34,12 @@ const TeacherDashboard: React.FC = () => {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
 
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [schoolName, setSchoolName] = useState('');
+  const [schoolMessage, setSchoolMessage] = useState({ type: '', text: '' });
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedExamLink, setCopiedExamLink] = useState<string | null>(null);
 
   if (!loggedInUser || loggedInUser === 'admin') {
     setPage(Page.TeacherLogin);
@@ -143,6 +152,42 @@ const TeacherDashboard: React.FC = () => {
     setIsLogoutModalOpen(false);
   };
 
+  const handleSchoolModalOpen = () => {
+    setSchoolName(teacher.schoolName || '');
+    setSchoolMessage({ type: '', text: '' });
+    setIsSchoolModalOpen(true);
+  };
+
+  const handleSaveSchoolSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSchoolMessage({ type: '', text: '' });
+
+    try {
+      await updateTeacher({ ...teacher, schoolName: schoolName.trim() });
+      setSchoolMessage({ type: 'success', text: 'บันทึกการตั้งค่าโรงเรียนสำเร็จ' });
+      setTimeout(() => {
+        setIsSchoolModalOpen(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to update school settings", error);
+      setSchoolMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' });
+    }
+  };
+
+  const handleCopyPersonalLink = () => {
+    // Determine the base URL (handles local and deployed environments)
+    const baseUrl = window.location.origin + window.location.pathname;
+    const personalLink = `${baseUrl}?tid=${teacher.id}`;
+
+    navigator.clipboard.writeText(personalLink).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }).catch(err => {
+      console.error('Failed to copy link: ', err);
+      alert('ไม่สามารถคัดลอกลิงก์ได้');
+    });
+  };
+
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code).then(() => {
       setCopiedCode(code);
@@ -151,6 +196,41 @@ const TeacherDashboard: React.FC = () => {
       console.error('Failed to copy text: ', err);
       alert('ไม่สามารถคัดลอกรหัสได้');
     });
+  };
+
+  const handleCopyExamLink = (exam: Exam) => {
+    const baseUrl = window.location.origin + window.location.pathname;
+    // Use accessKey if available, otherwise fallback to examCode (backward compatibility)
+    const keyParam = exam.accessKey ? `ak=${exam.accessKey}` : `ec=${exam.examCode}`;
+    const examLink = `${baseUrl}?tid=${teacher.id}&${keyParam}`;
+
+    navigator.clipboard.writeText(examLink).then(() => {
+      setCopiedExamLink(exam.id);
+      setTimeout(() => setCopiedExamLink(null), 2000);
+    }).catch(err => {
+      console.error('Failed to copy link: ', err);
+      alert('ไม่สามารถคัดลอกลิงก์ได้');
+    });
+  };
+
+  const handleRegenerateExamLink = async (exam: Exam) => {
+    const newKey = Math.random().toString(36).substring(2, 12).toUpperCase();
+    const baseUrl = window.location.origin + window.location.pathname;
+    const newLink = `${baseUrl}?tid=${teacher.id}&ak=${newKey}`;
+
+    try {
+      await updateExam({ ...exam, accessKey: newKey });
+
+      // Auto-copy new link to clipboard
+      await navigator.clipboard.writeText(newLink);
+
+      // Show visual feedback (reusing setCopiedExamLink)
+      setCopiedExamLink(exam.id);
+      setTimeout(() => setCopiedExamLink(null), 2000);
+    } catch (error) {
+      console.error("Failed to regenerate or copy exam link", error);
+      alert("เกิดข้อผิดพลาดในการสร้างลิงก์หรือคัดลอกลิงก์");
+    }
   };
 
   const examsInSelectedSubject = useMemo(() => {
@@ -196,6 +276,24 @@ const TeacherDashboard: React.FC = () => {
                     ) : (
                       <CopyIcon className="w-5 h-5" />
                     )}
+                  </button>
+                  <button
+                    onClick={() => handleCopyExamLink(exam)}
+                    title="คัดลอกลิงก์ให้นักเรียนเข้าร่วมทันที"
+                    className="p-1.5 text-gray-500 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    {copiedExamLink === exam.id ? (
+                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <LinkIcon className="h-5 w-5" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleRegenerateExamLink(exam)}
+                    title="รีเซ็ตลิงก์ใหม่ (ลิงก์เดิมจะใช้ไม่ได้ทันที)"
+                    className="p-1.5 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-md transition-colors"
+                  >
+                    <RefreshIcon className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -265,6 +363,10 @@ const TeacherDashboard: React.FC = () => {
               + สร้างรายวิชาใหม่
             </button>
           )}
+          <button onClick={handleSchoolModalOpen} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
+            <SchoolIcon className="h-5 w-5" />
+            <span>ตั้งค่าโรงเรียน</span>
+          </button>
           <button onClick={() => setIsPasswordModalOpen(true)} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
             <KeyIcon className="h-5 w-5" />
             <span>เปลี่ยนรหัสผ่าน</span>
@@ -302,93 +404,161 @@ const TeacherDashboard: React.FC = () => {
         )}
       </div>
 
-      {examToDelete && (
-        <ConfirmationModal
-          title="ยืนยันการลบชุดข้อสอบ"
-          message={`คุณแน่ใจหรือไม่ว่าต้องการลบชุดข้อสอบวิชา "${examToDelete.subject}" (${examToDelete.title})? ผลสอบของนักเรียนทั้งหมดที่เกี่ยวข้องจะถูกลบไปด้วย และการกระทำนี้ไม่สามารถย้อนกลับได้`}
-          onConfirm={confirmDeleteExam}
-          onCancel={() => setExamToDelete(null)}
-        />
-      )}
+      {
+        examToDelete && (
+          <ConfirmationModal
+            title="ยืนยันการลบชุดข้อสอบ"
+            message={`คุณแน่ใจหรือไม่ว่าต้องการลบชุดข้อสอบวิชา "${examToDelete.subject}" (${examToDelete.title})? ผลสอบของนักเรียนทั้งหมดที่เกี่ยวข้องจะถูกลบไปด้วย และการกระทำนี้ไม่สามารถย้อนกลับได้`}
+            onConfirm={confirmDeleteExam}
+            onCancel={() => setExamToDelete(null)}
+          />
+        )
+      }
 
-      {isNewSubjectModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">สร้างรายวิชาใหม่</h2>
-              <button onClick={() => setIsNewSubjectModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-            </div>
-            <form onSubmit={handleConfirmNewSubject}>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700">ชื่อรายวิชา</label>
-                <input
-                  type="text"
-                  value={newSubjectName}
-                  onChange={(e) => setNewSubjectName(e.target.value)}
-                  className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
-                  placeholder="เช่น วิทยาการคำนวณ"
-                  required
-                  autoFocus
-                />
+      {
+        isNewSubjectModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">สร้างรายวิชาใหม่</h2>
+                <button onClick={() => setIsNewSubjectModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
               </div>
-              <div className="flex justify-end gap-4">
-                <button type="button" onClick={() => setIsNewSubjectModalOpen(false)} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">ยกเลิก</button>
-                <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">สร้างและเริ่มเพิ่มข้อสอบ</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {isPasswordModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
-              <button onClick={handlePasswordModalClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-            </div>
-            <form onSubmit={handleChangePassword}>
-              {passwordMessage.text && (
-                <div className={`p-3 rounded-lg mb-4 text-sm ${passwordMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {passwordMessage.text}
+              <form onSubmit={handleConfirmNewSubject}>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700">ชื่อรายวิชา</label>
+                  <input
+                    type="text"
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
+                    placeholder="เช่น วิทยาการคำนวณ"
+                    required
+                    autoFocus
+                  />
                 </div>
-              )}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">รหัสผ่านปัจจุบัน</label>
-                <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-              </div>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700">รหัสผ่านใหม่</label>
-                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-              </div>
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700">ยืนยันรหัสผ่านใหม่</label>
-                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-              </div>
-              <div className="flex justify-end gap-4">
-                <button type="button" onClick={handlePasswordModalClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">
-                  ยกเลิก
-                </button>
-                <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">
-                  อัปเดตรหัสผ่าน
-                </button>
-              </div>
-            </form>
+                <div className="flex justify-end gap-4">
+                  <button type="button" onClick={() => setIsNewSubjectModalOpen(false)} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">ยกเลิก</button>
+                  <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">สร้างและเริ่มเพิ่มข้อสอบ</button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {isLogoutModalOpen && (
-        <ConfirmationModal
-          title="ยืนยันการออกจากระบบ"
-          message="คุณต้องการออกจากระบบใช่หรือไม่?"
-          confirmText="ออกจากระบบ"
-          onConfirm={handleLogoutConfirm}
-          onCancel={() => setIsLogoutModalOpen(false)}
-          confirmButtonClass="bg-red-600 hover:bg-red-700"
-        />
-      )}
-    </div>
+      {
+        isPasswordModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
+                <button onClick={handlePasswordModalClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+              </div>
+              <form onSubmit={handleChangePassword}>
+                {passwordMessage.text && (
+                  <div className={`p-3 rounded-lg mb-4 text-sm ${passwordMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {passwordMessage.text}
+                  </div>
+                )}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">รหัสผ่านปัจจุบัน</label>
+                  <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">รหัสผ่านใหม่</label>
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+                </div>
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700">ยืนยันรหัสผ่านใหม่</label>
+                  <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
+                </div>
+                <div className="flex justify-end gap-4">
+                  <button type="button" onClick={handlePasswordModalClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">
+                    ยกเลิก
+                  </button>
+                  <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">
+                    อัปเดตรหัสผ่าน
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        isSchoolModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">ตั้งค่าข้อมูลโรงเรียน</h2>
+                <button onClick={() => setIsSchoolModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+              </div>
+              <form onSubmit={handleSaveSchoolSettings}>
+                {schoolMessage.text && (
+                  <div className={`p-3 rounded-lg mb-4 text-sm ${schoolMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {schoolMessage.text}
+                  </div>
+                )}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700">ชื่อโรงเรียน</label>
+                  <input
+                    type="text"
+                    value={schoolName}
+                    onChange={(e) => setSchoolName(e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="เช่น โรงเรียนตัวอย่างวิทยา"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">ชื่อนี้จะแสดงในหน้าแรกของนักเรียน เมื่อนักเรียนเข้าผ่านลิงก์ส่วนตัวของคุณ</p>
+                </div>
+
+                <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+                  <label className="block text-sm font-bold text-indigo-900 mb-2">ลิงก์หน้าแรกส่วนตัวของคุณ</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={`${window.location.origin}${window.location.pathname}?tid=${teacher.id}`}
+                      className="flex-grow bg-white px-3 py-2 text-xs border border-indigo-200 rounded text-gray-600 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCopyPersonalLink}
+                      className={`p-2 rounded-md transition-all ${copiedLink ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                    >
+                      {copiedLink ? <CheckCircleIcon className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-[10px] text-indigo-600">คุณสามารถคัดลอกลิงก์นี้ไปให้นักเรียนเพื่อให้แสดงชื่อโรงเรียนของคุณได้ทันทีครับ</p>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setIsSchoolModalOpen(false)} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">
+                    ยกเลิก
+                  </button>
+                  <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 shadow-md">
+                    บันทึกการตั้งค่า
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        isLogoutModalOpen && (
+          <ConfirmationModal
+            title="ยืนยันการออกจากระบบ"
+            message="คุณต้องการออกจากระบบใช่หรือไม่?"
+            confirmText="ออกจากระบบ"
+            onConfirm={handleLogoutConfirm}
+            onCancel={() => setIsLogoutModalOpen(false)}
+            confirmButtonClass="bg-red-600 hover:bg-red-700"
+          />
+        )
+      }
+    </div >
   );
 };
 

@@ -30,6 +30,7 @@ const deepCopyExam = (exam: Exam): Exam => {
         examCode: exam.examCode,
         requireFullscreen: exam.requireFullscreen,
         restrictedRoom: exam.restrictedRoom,
+        accessKey: exam.accessKey || '',
     };
 };
 
@@ -81,6 +82,7 @@ const CreateEditExamPage: React.FC = () => {
                     examCode: generateUniqueCode(),
                     requireFullscreen: false,
                     restrictedRoom: '',
+                    accessKey: Math.random().toString(36).substring(2, 12).toUpperCase(),
                 };
                 setLocalExam(newExamData);
                 setIsMinTimeEnabled(newExamData.minSubmitTime > 0);

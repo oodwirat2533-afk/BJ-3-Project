@@ -35,9 +35,7 @@ const TeacherDashboard: React.FC = () => {
 
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
-  const [schoolName, setSchoolName] = useState('');
-  const [schoolMessage, setSchoolMessage] = useState({ type: '', text: '' });
+  const [isPersonalLinkModalOpen, setIsPersonalLinkModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedExamLink, setCopiedExamLink] = useState<string | null>(null);
 
@@ -152,26 +150,9 @@ const TeacherDashboard: React.FC = () => {
     setIsLogoutModalOpen(false);
   };
 
-  const handleSchoolModalOpen = () => {
-    setSchoolName(teacher.schoolName || '');
-    setSchoolMessage({ type: '', text: '' });
-    setIsSchoolModalOpen(true);
-  };
-
-  const handleSaveSchoolSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSchoolMessage({ type: '', text: '' });
-
-    try {
-      await updateTeacher({ ...teacher, schoolName: schoolName.trim() });
-      setSchoolMessage({ type: 'success', text: 'บันทึกการตั้งค่าโรงเรียนสำเร็จ' });
-      setTimeout(() => {
-        setIsSchoolModalOpen(false);
-      }, 1500);
-    } catch (error) {
-      console.error("Failed to update school settings", error);
-      setSchoolMessage({ type: 'error', text: 'เกิดข้อผิดพลาดในการบันทึกข้อมูล' });
-    }
+  const handlePersonalLinkModalOpen = () => {
+    setIsPersonalLinkModalOpen(true);
+    setCopiedLink(false); // Reset copy status when opening modal
   };
 
   const handleCopyPersonalLink = () => {
@@ -356,7 +337,10 @@ const TeacherDashboard: React.FC = () => {
           </div>
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">แผงควบคุมครู</h1>
-            <p className="text-gray-500 mt-2">ยินดีต้อนรับ {teacher.name}</p>
+            <p className="text-gray-500 mt-0.5">ยินดีต้อนรับ {teacher.name}</p>
+            {teacher.schoolName && (
+              <p className="text-indigo-600 text-sm font-semibold">{teacher.schoolName}</p>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
@@ -375,9 +359,9 @@ const TeacherDashboard: React.FC = () => {
               + สร้างรายวิชาใหม่
             </button>
           )}
-          <button onClick={handleSchoolModalOpen} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
-            <SchoolIcon className="h-5 w-5" />
-            <span>ตั้งค่าโรงเรียน</span>
+          <button onClick={handlePersonalLinkModalOpen} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border transition-colors">
+            <LinkIcon className="h-5 w-5" />
+            <span>ลิงก์ส่วนตัว</span>
           </button>
           <button onClick={() => setIsPasswordModalOpen(true)} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
             <KeyIcon className="h-5 w-5" />
@@ -499,60 +483,50 @@ const TeacherDashboard: React.FC = () => {
       }
 
       {
-        isSchoolModalOpen && (
+        isPersonalLinkModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md animate-fade-in-up">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800">ตั้งค่าข้อมูลโรงเรียน</h2>
-                <button onClick={() => setIsSchoolModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">ลิงก์หน้าแรกส่วนตัว</h2>
               </div>
-              <form onSubmit={handleSaveSchoolSettings}>
-                {schoolMessage.text && (
-                  <div className={`p-3 rounded-lg mb-4 text-sm ${schoolMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                    {schoolMessage.text}
-                  </div>
-                )}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700">ชื่อโรงเรียน</label>
+
+              <div className="mb-6">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">สังกัดโรงเรียน</label>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                  <SchoolIcon className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-700 font-medium">{teacher.schoolName || 'ไม่ได้ระบุข้อมูลโรงเรียน'}</span>
+                </div>
+                <p className="mt-2 text-[10px] text-gray-400">* ชื่อโรงเรียนจะปรากฏให้เมื่อนักเรียนเข้าผ่านลิงก์ส่วนตัวของคุณ หากต้องการแก้ไขกรุณาติดต่อผู้ดูแลระบบ</p>
+              </div>
+
+              <div className="mb-8 p-5 bg-indigo-50 rounded-xl border border-indigo-100">
+                <label className="block text-sm font-bold text-indigo-900 mb-3 flex items-center gap-2">
+                  <LinkIcon className="h-4 w-4" />
+                  ลิงก์หน้าแรกส่วนตัวของคุณ
+                </label>
+                <div className="flex items-center gap-2">
                   <input
                     type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="เช่น โรงเรียนตัวอย่างวิทยา"
+                    readOnly
+                    value={`${window.location.origin}${window.location.pathname}?tid=${teacher.id}`}
+                    className="flex-grow bg-white px-3 py-2.5 text-[10px] border border-indigo-200 rounded-lg text-gray-600 outline-none font-mono"
                   />
-                  <p className="mt-1 text-xs text-gray-500">ชื่อนี้จะแสดงในหน้าแรกของนักเรียน เมื่อนักเรียนเข้าผ่านลิงก์ส่วนตัวของคุณ</p>
-                </div>
-
-                <div className="mb-6 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <label className="block text-sm font-bold text-indigo-900 mb-2">ลิงก์หน้าแรกส่วนตัวของคุณ</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={`${window.location.origin}${window.location.pathname}?tid=${teacher.id}`}
-                      className="flex-grow bg-white px-3 py-2 text-xs border border-indigo-200 rounded text-gray-600 outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCopyPersonalLink}
-                      className={`p-2 rounded-md transition-all ${copiedLink ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
-                    >
-                      {copiedLink ? <CheckCircleIcon className="h-5 w-5" /> : <LinkIcon className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  <p className="mt-2 text-[10px] text-indigo-600">คุณสามารถคัดลอกลิงก์นี้ไปให้นักเรียนเพื่อให้แสดงชื่อโรงเรียนของคุณได้ทันทีครับ</p>
-                </div>
-
-                <div className="flex justify-end gap-3">
-                  <button type="button" onClick={() => setIsSchoolModalOpen(false)} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">
-                    ยกเลิก
-                  </button>
-                  <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700 shadow-md">
-                    บันทึกการตั้งค่า
+                  <button
+                    type="button"
+                    onClick={handleCopyPersonalLink}
+                    className={`p-2.5 rounded-lg transition-all shadow-sm ${copiedLink ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                  >
+                    {copiedLink ? <CheckCircleIcon className="h-5 w-5" /> : <CopyIcon className="h-5 w-5" />}
                   </button>
                 </div>
-              </form>
+                <p className="mt-3 text-[10px] text-indigo-600 leading-relaxed font-medium">คุณสามารถคัดลอกลิงก์นี้ไปให้ให้นักเรียน เพื่อแสดงชื่อโรงเรียนของคุณบนหน้าแรกได้ทันที</p>
+              </div>
+
+              <div className="flex justify-center">
+                <button type="button" onClick={() => setIsPersonalLinkModalOpen(false)} className="w-full bg-gray-100 text-gray-700 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-colors">
+                  ปิดหน้าต่าง
+                </button>
+              </div>
             </div>
           </div>
         )

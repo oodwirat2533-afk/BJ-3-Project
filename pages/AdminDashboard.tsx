@@ -18,6 +18,7 @@ const AdminDashboard: React.FC = () => {
     // State for forms
     const [newTeacherName, setNewTeacherName] = useState('');
     const [newTeacherEmail, setNewTeacherEmail] = useState('');
+    const [newTeacherSchool, setNewTeacherSchool] = useState('');
     const [newTeacherPassword, setNewTeacherPassword] = useState('1234');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -31,7 +32,12 @@ const AdminDashboard: React.FC = () => {
                 alert("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร");
                 return;
             }
-            await addTeacher({ name: newTeacherName, email: newTeacherEmail, password: newTeacherPassword });
+            await addTeacher({
+                name: newTeacherName,
+                email: newTeacherEmail,
+                password: newTeacherPassword,
+                schoolName: newTeacherSchool
+            });
             closeAddTeacherModal();
         }
     };
@@ -52,6 +58,7 @@ const AdminDashboard: React.FC = () => {
         setIsAddTeacherModalOpen(false);
         setNewTeacherName('');
         setNewTeacherEmail('');
+        setNewTeacherSchool('');
         setNewTeacherPassword('1234');
     }
 
@@ -142,6 +149,7 @@ const AdminDashboard: React.FC = () => {
                                 <tr>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ชื่อ-นามสกุล</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">อีเมล</th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">โรงเรียน</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จำนวนชุดข้อสอบ</th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">การกระทำ</th>
@@ -154,6 +162,7 @@ const AdminDashboard: React.FC = () => {
                                         <tr key={teacher.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{teacher.name}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.email}</td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{teacher.schoolName || '-'}</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{examCount} ชุด</td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm">
                                                 <span
@@ -193,6 +202,7 @@ const AdminDashboard: React.FC = () => {
                                         <div className="flex-1">
                                             <p className="text-lg font-bold text-gray-900 leading-tight">{teacher.name}</p>
                                             <p className="text-sm text-gray-500">{teacher.email}</p>
+                                            <p className="text-xs text-gray-400 mt-1">{teacher.schoolName || 'ไม่มีข้อมูลโรงเรียน'}</p>
                                         </div>
                                         <span
                                             className={`ml-2 px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full whitespace-nowrap ${teacher.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
@@ -264,6 +274,10 @@ const AdminDashboard: React.FC = () => {
                                 <label className="block text-sm font-medium text-gray-700">อีเมล</label>
                                 <input type="email" value={newTeacherEmail} onChange={e => setNewTeacherEmail(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="somchai@example.com" required />
                             </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700">ชื่อโรงเรียน</label>
+                                <input type="text" value={newTeacherSchool} onChange={e => setNewTeacherSchool(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" placeholder="เช่น โรงเรียนไทยวิทยา" />
+                            </div>
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700">รหัสผ่านเริ่มต้น</label>
                                 <input type="text" value={newTeacherPassword} onChange={e => setNewTeacherPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" required />
@@ -293,6 +307,10 @@ const AdminDashboard: React.FC = () => {
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700">อีเมล</label>
                                 <input type="email" value={editingTeacher.email} onChange={e => setEditingTeacher({ ...editingTeacher, email: e.target.value })} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" />
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700">ชื่อโรงเรียน</label>
+                                <input type="text" value={editingTeacher.schoolName || ''} onChange={e => setEditingTeacher({ ...editingTeacher, schoolName: e.target.value })} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" />
                             </div>
                             <div className="mb-6">
                                 <label className="block text-sm font-medium text-gray-700">รหัสผ่าน</label>

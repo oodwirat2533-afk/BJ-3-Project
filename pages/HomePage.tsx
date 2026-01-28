@@ -12,6 +12,8 @@ const HomePage: React.FC = () => {
     return params.has('tid');
   });
   const [customBranding, setCustomBranding] = useState<{ schoolName: string } | null>(null);
+  const [waitingExam, setWaitingExam] = useState<{ id: string, subject: string, title: string } | null>(null);
+  const [isInvalidLink, setIsInvalidLink] = useState(false);
 
   // Student State
   const [examCode, setExamCode] = useState('');
@@ -25,6 +27,7 @@ const HomePage: React.FC = () => {
   // Signup state
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupSchool, setSignupSchool] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
   const [signupMessage, setSignupMessage] = useState('');
@@ -64,6 +67,22 @@ const HomePage: React.FC = () => {
 
       if (foundExam) {
         setPage(Page.StudentInfo, { examId: foundExam.id });
+      } else {
+        // Find if exam exists but is inactive
+        let inactiveExam = null;
+        if (ak) inactiveExam = exams.find(ex => ex.accessKey === ak);
+        if (!inactiveExam && ec) {
+          const studentInputCode = ec.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+          inactiveExam = exams.find(
+            (ex) => ex.examCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === studentInputCode
+          );
+        }
+        if (inactiveExam && !inactiveExam.isActive) {
+          setWaitingExam({ id: inactiveExam.id, subject: inactiveExam.subject, title: inactiveExam.title });
+        } else if (ak && !inactiveExam) {
+          // Access key provided but no exam found at all (could be deleted or key regenerated)
+          setIsInvalidLink(true);
+        }
       }
     }
   }, [teachers, exams, setPage]);
@@ -81,9 +100,13 @@ const HomePage: React.FC = () => {
       setPage(Page.StudentInfo, { examId: foundExam.id });
     } else {
       const exists = exams.find(ex => ex.examCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') === sanitizedCode);
-      if (!exists) setStudentError('รหัสข้อสอบไม่ถูกต้อง');
-      else if (!exists.isActive) setStudentError('ชุดข้อสอบนี้ยังไม่เปิดให้ทำ');
-      else setStudentError('เกิดข้อผิดพลาดในการค้นหาข้อสอบ');
+      if (!exists) {
+        setStudentError('รหัสข้อสอบไม่ถูกต้อง');
+      } else if (!exists.isActive) {
+        setWaitingExam({ id: exists.id, subject: exists.subject, title: exists.title });
+      } else {
+        setStudentError('เกิดข้อผิดพลาดในการค้นหาข้อสอบ');
+      }
     }
   };
 
@@ -130,10 +153,11 @@ const HomePage: React.FC = () => {
       return;
     }
 
-    addTeacher({ name: signupName, email: signupEmail, password: signupPassword });
+    addTeacher({ name: signupName, email: signupEmail, password: signupPassword, schoolName: signupSchool });
     setSignupMessage('การสมัครเสร็จสมบูรณ์! กรุณารอผู้ดูแลระบบอนุมัติ');
     setSignupName('');
     setSignupEmail('');
+    setSignupSchool('');
     setSignupPassword('');
     setSignupConfirmPassword('');
     setTimeout(() => {
@@ -161,7 +185,46 @@ const HomePage: React.FC = () => {
 
         {/* Login/Signup Card */}
         <div className="bg-white rounded-xl shadow-2xl p-5 md:p-6 transform transition-all hover:shadow-indigo-100 animate-fade-in-up">
-          {isStudentView ? (
+          {isInvalidLink ? (
+            <div className="text-center py-4">
+              <div className="flex justify-center mb-6">
+                <div className="p-4 bg-red-50 rounded-full">
+                  <LogoIcon className="h-12 w-12 text-red-400 opacity-50" />
+                </div>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">ลิงก์ไม่ถูกต้องหรือหมดอายุ</h2>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                ลิงก์ข้อสอบนี้ถูกยกเลิกหรือไม่มีอยู่ในระบบแล้ว<br />
+                <span className="text-xs mt-2 block font-medium text-red-500">คุณครูอาจมีการเปลี่ยนรหัสเข้าสอบใหม่ (Regenerate Link)</span>
+                <span className="text-xs mt-1 block">กรุณาขอลิงก์ชุดใหม่จากคุณครูผู้สอนอีกครั้ง</span>
+              </p>
+            </div>
+          ) : waitingExam ? (
+            <div className="text-center py-4">
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <LogoIcon className="h-16 w-16 text-indigo-200" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                </div>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">ยังไม่เปิดให้ทำข้อสอบ</h2>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                วิชา <span className="font-bold text-indigo-600">{waitingExam.subject}</span><br />
+                {waitingExam.title}<br />
+                <span className="text-xs mt-2 block">กรุณารอคุณครูเปิดระบบ แล้วกดปุ่ม "ลองอีกครั้ง"</span>
+              </p>
+              <div className="space-y-3">
+                <button
+                  onClick={() => window.location.reload()}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-all active:scale-95"
+                >
+                  ลองอีกครั้ง (Refresh)
+                </button>
+              </div>
+            </div>
+          ) : isStudentView ? (
             <div className="text-center">
               <div className="flex justify-center mb-2">
                 <StudentIcon className="h-8 w-8 text-indigo-500" />
@@ -273,6 +336,19 @@ const HomePage: React.FC = () => {
                       type="email"
                       value={signupEmail}
                       onChange={(e) => setSignupEmail(e.target.value)}
+                      className="shadow-sm appearance-none border-2 border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-indigo-400 transition-colors bg-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 text-xs font-bold mb-1" htmlFor="signup-school">
+                      ชื่อโรงเรียน
+                    </label>
+                    <input
+                      id="signup-school"
+                      type="text"
+                      value={signupSchool}
+                      onChange={(e) => setSignupSchool(e.target.value)}
                       className="shadow-sm appearance-none border-2 border-gray-300 rounded-lg w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:border-indigo-400 transition-colors bg-white"
                       required
                     />

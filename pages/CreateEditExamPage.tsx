@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../context/AppContext';
-import { Page, Exam, Question } from '../types';
+import { Page, Exam, Question, Grade } from '../types';
 import { generateQuestions } from '../services/geminiService';
 import { AIGenerateIcon, TrashIcon } from '../components/Icons';
 
@@ -30,6 +30,7 @@ const deepCopyExam = (exam: Exam): Exam => {
         examCode: exam.examCode,
         requireFullscreen: exam.requireFullscreen,
         restrictedRoom: exam.restrictedRoom,
+        restrictedGrade: exam.restrictedGrade || '',
         accessKey: exam.accessKey || '',
     };
 };
@@ -82,6 +83,7 @@ const CreateEditExamPage: React.FC = () => {
                     examCode: generateUniqueCode(),
                     requireFullscreen: false,
                     restrictedRoom: '',
+                    restrictedGrade: '',
                     accessKey: Math.random().toString(36).substring(2, 12).toUpperCase(),
                 };
                 setLocalExam(newExamData);
@@ -258,6 +260,32 @@ const CreateEditExamPage: React.FC = () => {
                                 <input type="number" min="1" value={localExam.timeLimit || ''} onChange={e => handleFieldChange('timeLimit', Number(e.target.value))} required className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm" />
                             </div>
                             <div>
+                                <label className="block text-sm font-medium text-gray-700">จำกัดระดับชั้นที่เข้าสอบ (เลือกเฉพาะถ้าต้องการล็อคระดับชั้น)</label>
+                                <select
+                                    value={localExam.restrictedGrade || ''}
+                                    onChange={e => handleFieldChange('restrictedGrade', e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
+                                >
+                                    <option value="">ทุกระดับชั้น (ไม่จำกัด)</option>
+                                    {Object.values(Grade).map(g => (
+                                        <option key={g} value={g}>{g}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">จำกัดห้องที่เข้าสอบ (เลือกเฉพาะถ้าต้องการล็อคห้อง)</label>
+                                <select
+                                    value={localExam.restrictedRoom || ''}
+                                    onChange={e => handleFieldChange('restrictedRoom', e.target.value)}
+                                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
+                                >
+                                    <option value="">ทุกห้อง (ไม่จำกัด)</option>
+                                    {Array.from({ length: 15 }, (_, i) => (i + 1).toString()).map(r => (
+                                        <option key={r} value={r}>ห้อง {r}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <input
                                         type="checkbox"
@@ -288,19 +316,6 @@ const CreateEditExamPage: React.FC = () => {
                                     disabled={!isMinTimeEnabled}
                                     className="block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm disabled:bg-gray-100 disabled:cursor-not-allowed" />
                                 {localExam.minSubmitTime > localExam.timeLimit && <p className="text-xs text-red-500 mt-1">เวลาส่งขั้นต่ำต้องไม่เกินเวลาสอบ</p>}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">จำกัดห้องที่เข้าสอบ (เลือกเฉพาะถ้าต้องการล็อคห้อง)</label>
-                                <select
-                                    value={localExam.restrictedRoom || ''}
-                                    onChange={e => handleFieldChange('restrictedRoom', e.target.value)}
-                                    className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm"
-                                >
-                                    <option value="">ทุกห้อง (ไม่จำกัด)</option>
-                                    {Array.from({ length: 15 }, (_, i) => (i + 1).toString()).map(r => (
-                                        <option key={r} value={r}>ห้อง {r}</option>
-                                    ))}
-                                </select>
                             </div>
                             <div className="flex items-end pb-1">
                                 <div className="flex items-center gap-2">

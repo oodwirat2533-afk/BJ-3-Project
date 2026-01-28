@@ -44,6 +44,7 @@ export interface Exam {
   examCode: string;
   requireFullscreen?: boolean;
   restrictedRoom?: string;
+  restrictedGrade?: string;
   schoolName?: string;
   accessKey?: string;
 }

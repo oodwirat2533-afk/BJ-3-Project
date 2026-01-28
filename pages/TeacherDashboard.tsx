@@ -218,18 +218,30 @@ const TeacherDashboard: React.FC = () => {
     const baseUrl = window.location.origin + window.location.pathname;
     const newLink = `${baseUrl}?tid=${teacher.id}&ak=${newKey}`;
 
+    // Attempt copy IMMEDIATELY to preserve user gesture context (crucial for mobile)
+    let copySuccessful = false;
     try {
+      await navigator.clipboard.writeText(newLink);
+      copySuccessful = true;
+    } catch (err) {
+      console.warn('Initial auto-copy attempt failed:', err);
+    }
+
+    try {
+      // Update the database
       await updateExam({ ...exam, accessKey: newKey });
 
-      // Auto-copy new link to clipboard
-      await navigator.clipboard.writeText(newLink);
-
-      // Show visual feedback (reusing setCopiedExamLink)
-      setCopiedExamLink(exam.id);
-      setTimeout(() => setCopiedExamLink(null), 2000);
-    } catch (error) {
-      console.error("Failed to regenerate or copy exam link", error);
-      alert("เกิดข้อผิดพลาดในการสร้างลิงก์หรือคัดลอกลิงก์");
+      if (copySuccessful) {
+        // Show success visual feedback
+        setCopiedExamLink(exam.id);
+        setTimeout(() => setCopiedExamLink(null), 2000);
+      } else {
+        // Soft alert only if auto-copy failed
+        alert("สร้างลิงก์ใหม่สำเร็จแล้วครับ แต่ระบบไม่สามารถคัดลอกอัตโนมัติได้ คุณครูสามารถกดปุ่มไอคอนลิงก์เพื่อคัดลอกด้วยตนเองได้เลยครับ");
+      }
+    } catch (dbError) {
+      console.error("Failed to regenerate exam link:", dbError);
+      alert("เกิดข้อผิดพลาดในการบันทึกรหัสใหม่ลงระบบ กรุณาลองใหม่อีกครั้ง");
     }
   };
 

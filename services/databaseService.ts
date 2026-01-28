@@ -153,6 +153,7 @@ export const updateExamAPI = async (exam: Exam): Promise<Exam> => {
     examCode: data.examCode,
     requireFullscreen: data.requireFullscreen,
     restrictedRoom: data.restrictedRoom || '',
+    restrictedGrade: data.restrictedGrade || '',
     accessKey: data.accessKey || '',
   };
 

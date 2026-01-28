@@ -291,7 +291,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateTeacher = useCallback(async (updatedTeacher: Teacher) => {
     try {
       await updateTeacherAPI(updatedTeacher);
-    } catch (error) { console.error("Failed to update teacher:", error); }
+    } catch (error) {
+      console.error("Failed to update teacher:", error);
+      throw error;
+    }
   }, []);
 
   const updateAdminPassword = useCallback(async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
@@ -332,7 +335,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const newTeacherData = { ...teacherData, approved: false };
       await addTeacherAPI(newTeacherData);
-    } catch (error) { console.error("Failed to add teacher:", error); }
+    } catch (error) {
+      console.error("Failed to add teacher:", error);
+      throw error;
+    }
   }, []);
 
 
@@ -349,7 +355,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateExam = useCallback(async (updatedExam: Exam) => {
     try {
       await updateExamAPI(updatedExam);
-    } catch (error) { console.error("Failed to update exam:", error); }
+    } catch (error) {
+      console.error("Failed to update exam:", error);
+      throw error;
+    }
   }, []);
 
   const deleteExam = useCallback(async (examId: string) => {
@@ -357,7 +366,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const resultsToDelete = results.filter(r => r.examId === examId);
       await Promise.all(resultsToDelete.map(r => deleteResultAPI(r.id)));
       await deleteExamAPI(examId);
-    } catch (error) { console.error("Failed to delete exam and its results:", error); }
+    } catch (error) {
+      console.error("Failed to delete exam and its results:", error);
+      throw error;
+    }
   }, [results]);
 
   const deleteTeacher = useCallback(async (teacherId: string) => {

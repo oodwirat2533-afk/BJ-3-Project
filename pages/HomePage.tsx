@@ -185,7 +185,7 @@ const HomePage: React.FC = () => {
                 <div className="pt-2">
                   {/* Toggle button removed */}
                 </div>
-                <div className="text-[10px] text-gray-300 font-normal mt-2 tracking-widest uppercase">
+                <div className="text-[10px] text-indigo-400 font-medium mt-2 uppercase">
                   พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา
                 </div>
               </form>
@@ -199,7 +199,7 @@ const HomePage: React.FC = () => {
                 </div>
                 <h2 className="text-lg font-semibold text-gray-800 tracking-wide border-b border-indigo-50 pb-1.5 inline-block px-4">สำหรับบุคลากร</h2>
                 <p className="text-gray-400 text-[10px] mt-1 uppercase tracking-wider font-medium">
-                  {isLogin ? 'Teacher & Admin Login' : 'Teacher Registration'}
+                  {isLogin ? 'เข้าสู่ระบบครูและผู้ดูแลระบบ' : 'สมัครสมาชิกใหม่สำหรับคุณครู'}
                 </p>
               </div>
 
@@ -243,7 +243,7 @@ const HomePage: React.FC = () => {
                       ยังไม่มีบัญชีครู? <button type="button" onClick={() => { setIsLogin(false); setError('') }} className="font-bold text-indigo-600 hover:underline">สมัครใช้งานที่นี่</button>
                     </p>
                     {/* Toggle button removed */}
-                    <div className="text-[10px] text-gray-300 font-normal mt-2 tracking-widest uppercase">
+                    <div className="text-[10px] text-indigo-400 font-medium mt-2 uppercase">
                       พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา
                     </div>
                   </div>
@@ -313,7 +313,7 @@ const HomePage: React.FC = () => {
                     <p className="text-sm text-gray-500 mb-1">
                       มีบัญชีแล้ว? <button type="button" onClick={() => { setIsLogin(true); setError('') }} className="font-bold text-indigo-600 hover:underline">กลับไปเข้าสู่ระบบ</button>
                     </p>
-                    <div className="text-[10px] text-gray-300 font-normal mt-2 tracking-widest uppercase">
+                    <div className="text-[10px] text-indigo-400 font-medium mt-2 uppercase">
                       พัฒนาโดย ครูวิรัตน์ ธีรพิพัฒนปัญญา
                     </div>
                   </div>

@@ -14,10 +14,13 @@ const StudentInfoPage: React.FC = () => {
   const [number, setNumber] = useState('1');
   const [showWarning, setShowWarning] = useState(false);
 
-  // Handle restricted room logic
+  // Handle restricted room and grade logic
   React.useEffect(() => {
     if (activeExam?.restrictedRoom) {
       setRoom(activeExam.restrictedRoom);
+    }
+    if (activeExam?.restrictedGrade) {
+      setGrade(activeExam.restrictedGrade as Grade);
     }
   }, [activeExam]);
 
@@ -170,7 +173,8 @@ const StudentInfoPage: React.FC = () => {
                     setGrade(e.target.value as Grade);
                     setRoom('1');
                   }}
-                  className="shadow-sm appearance-none border rounded w-full py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base"
+                  disabled={!!activeExam.restrictedGrade}
+                  className={`shadow-sm appearance-none border rounded w-full py-2 px-3 bg-white text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-indigo-400 text-base ${activeExam.restrictedGrade ? 'bg-gray-100 cursor-not-allowed opacity-75' : ''}`}
                 >
                   {Object.values(Grade).map(g => <option key={g} value={g}>{g}</option>)}
                 </select>

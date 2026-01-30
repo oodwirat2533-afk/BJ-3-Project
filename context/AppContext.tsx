@@ -6,13 +6,13 @@ import {
   addTeacherAPI, updateTeacherAPI, deleteTeacherAPI,
   addExamAPI, updateExamAPI, deleteExamAPI,
   addResultAPI, deleteResultAPI,
-  updateAdminPasswordAPI,
   teachersCol,
   examsCol,
   resultsCol,
-  configCol
 } from '../services/databaseService';
 import { onSnapshot, Timestamp } from 'firebase/firestore';
+
+export const SUPER_ADMIN_EMAIL = 'wirat@banhan3.ac.th';
 
 interface AppContextType {
   // State
@@ -22,7 +22,7 @@ interface AppContextType {
   teachers: Teacher[];
   exams: Exam[];
   results: ExamResult[];
-  loggedInUser: Teacher | 'admin' | null;
+  loggedInUser: Teacher | null;
   activeExam: Exam | null;
   activeResult: ExamResult | null;
   activeStudent: Student | null;
@@ -34,11 +34,9 @@ interface AppContextType {
   setPage: (page: Page, context?: any) => void;
   goBack: () => void;
   retryLoad: () => void;
-  login: (user: Teacher | 'admin') => void;
+  login: (user: Teacher) => void;
   logout: () => void;
-  authenticateAdmin: (password: string) => boolean;
   authenticateTeacher: (email: string, password: string) => Teacher | null;
-  updateAdminPassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   updateTeacherPassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   setSelectedSubject: (subject: string | null) => void;
   setExamDashboardFilters: (filters: AppContextType['examDashboardFilters']) => void;
@@ -76,8 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [exams, setExams] = useState<Exam[]>([]);
   const [results, setResults] = useState<ExamResult[]>([]);
-  const [adminPassword, setAdminPassword] = useState<string>('');
-  const [loggedInUser, setLoggedInUser] = useState<Teacher | 'admin' | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<Teacher | null>(null);
 
   const [activeExamId, setActiveExamId] = useState<string | null>(null);
   const [activeResult, setActiveResult] = useState<ExamResult | null>(null);
@@ -96,7 +93,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setTeachers(data.teachers);
         setExams(data.exams);
         setResults(data.results);
-        setAdminPassword(data.adminPassword);
 
         // Check for saved user session after data is loaded
         const savedUserJson = localStorage.getItem('loggedInUser');
@@ -107,11 +103,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const params = new URLSearchParams(window.location.search);
           const hasPersonalizedParams = params.has('tid') || params.has('ec') || params.has('code');
 
-          if (savedUser.type === 'admin') {
-            setLoggedInUser('admin');
-            // Only redirect to dashboard if not viewing a personalized link
-            if (!hasPersonalizedParams) setPageState(Page.AdminDashboard);
-          } else if (savedUser.type === 'teacher' && savedUser.id) {
+          if (savedUser.type === 'teacher' && savedUser.id) {
             const foundTeacher = data.teachers.find(t => t.id === savedUser.id);
             if (foundTeacher && foundTeacher.approved) {
               setLoggedInUser(foundTeacher);
@@ -145,16 +137,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setExams(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam)));
     }, (err) => console.error("Real-time exams update failed:", err));
 
-    const unsubConfig = onSnapshot(configCol, (snapshot) => {
-      if (!snapshot.empty) {
-        setAdminPassword(snapshot.docs[0].data().adminPassword);
-      }
-    }, (err) => console.error("Real-time config update failed:", err));
-
     return () => {
       unsubTeachers();
       unsubExams();
-      unsubConfig();
     };
   }, [isLoading, error]); // Only re-run if loading state or error changes (usually once)
 
@@ -264,15 +249,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [returnPath, setPage]);
 
-  const login = useCallback((user: Teacher | 'admin') => {
+  const login = useCallback((user: Teacher) => {
     setLoggedInUser(user);
-    if (user === 'admin') {
-      localStorage.setItem('loggedInUser', JSON.stringify({ type: 'admin' }));
-      setPage(Page.AdminDashboard);
-    } else {
-      localStorage.setItem('loggedInUser', JSON.stringify({ type: 'teacher', id: user.id }));
-      setPage(Page.TeacherDashboard);
-    }
+    localStorage.setItem('loggedInUser', JSON.stringify({ type: 'teacher', id: user.id }));
+    setPage(Page.TeacherDashboard);
   }, [setPage]);
 
   const logout = useCallback(() => {
@@ -280,8 +260,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setLoggedInUser(null);
     setPage(Page.Home);
   }, [setPage]);
-
-  const authenticateAdmin = (password: string): boolean => password === adminPassword;
 
   const authenticateTeacher = (email: string, password: string): Teacher | null => {
     const teacher = teachers.find(t => t.email === email && t.password === password);
@@ -297,19 +275,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, []);
 
-  const updateAdminPassword = useCallback(async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
-    if (currentPassword !== adminPassword) return { success: false, message: 'รหัสผ่านปัจจุบันไม่ถูกต้อง' };
-    try {
-      await updateAdminPasswordAPI(newPassword);
-      return { success: true, message: 'เปลี่ยนรหัสผ่านสำเร็จ' };
-    } catch (error) {
-      console.error("Failed to update admin password:", error);
-      return { success: false, message: 'เกิดข้อผิดพลาดในการอัปเดตรหัสผ่าน' };
-    }
-  }, [adminPassword]);
-
   const updateTeacherPassword = useCallback(async (currentPassword: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
-    if (!loggedInUser || loggedInUser === 'admin') {
+    if (!loggedInUser) {
       return { success: false, message: 'ไม่มีผู้ใช้งานเข้าสู่ระบบ' };
     }
 
@@ -437,9 +404,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     retryLoad,
     login,
     logout,
-    authenticateAdmin,
     authenticateTeacher,
-    updateAdminPassword,
     updateTeacherPassword,
     setSelectedSubject: stableSetSelectedSubject,
     setExamDashboardFilters,
@@ -457,7 +422,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     isLoading, error, page, teachers, exams, results, loggedInUser,
     activeExam, activeResult, activeStudent, selectedSubject, returnPath,
     examDashboardFilters, setPage, goBack, retryLoad, login, logout,
-    updateAdminPassword, updateTeacherPassword, stableSetSelectedSubject,
+    updateTeacherPassword, stableSetSelectedSubject,
     setExamDashboardFilters, addTeacher, updateTeacher, deleteTeacher,
     addExam, updateExam, deleteExam, addResult, deleteResult,
     deleteResultsForExam, deleteResultsForRoom

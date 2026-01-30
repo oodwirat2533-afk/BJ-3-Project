@@ -1,18 +1,18 @@
 
 import React, { useState } from 'react';
-import { useAppContext } from '../context/AppContext';
-import { Teacher } from '../types';
-import { AdminIcon, EditIcon, LogoutIcon, TrashIcon, KeyIcon, CheckCircleIcon, XCircleIcon } from '../components/Icons';
+import { useAppContext, SUPER_ADMIN_EMAIL } from '../context/AppContext';
+import { Teacher, Page } from '../types';
+import { AdminIcon, EditIcon, LogoutIcon, TrashIcon, CheckCircleIcon, XCircleIcon, TeacherIcon } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const AdminDashboard: React.FC = () => {
-    const { teachers, exams, updateTeacher, deleteTeacher, addTeacher, logout, updateAdminPassword } = useAppContext();
+    const { teachers, exams, updateTeacher, deleteTeacher, addTeacher, logout, loggedInUser, setPage } = useAppContext();
+    const isSuperAdmin = typeof loggedInUser === 'object' && loggedInUser?.email === SUPER_ADMIN_EMAIL;
 
     // State for modals
     const [isAddTeacherModalOpen, setIsAddTeacherModalOpen] = useState(false);
     const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
     const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
-    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     // State for forms
@@ -20,10 +20,6 @@ const AdminDashboard: React.FC = () => {
     const [newTeacherEmail, setNewTeacherEmail] = useState('');
     const [newTeacherSchool, setNewTeacherSchool] = useState('');
     const [newTeacherPassword, setNewTeacherPassword] = useState('1234');
-    const [currentPassword, setCurrentPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
 
     const handleAddTeacher = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,40 +58,6 @@ const AdminDashboard: React.FC = () => {
         setNewTeacherPassword('1234');
     }
 
-    const handlePasswordModalClose = () => {
-        setIsPasswordModalOpen(false);
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-        setPasswordMessage({ type: '', text: '' });
-    };
-
-    const handleChangePassword = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setPasswordMessage({ type: '', text: '' });
-
-        if (newPassword.length < 4) {
-            setPasswordMessage({ type: 'error', text: 'รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร' });
-            return;
-        }
-
-        if (newPassword !== confirmPassword) {
-            setPasswordMessage({ type: 'error', text: 'รหัสผ่านใหม่และการยืนยันไม่ตรงกัน' });
-            return;
-        }
-
-        const result = await updateAdminPassword(currentPassword, newPassword);
-
-        if (result.success) {
-            setPasswordMessage({ type: 'success', text: result.message });
-            setTimeout(() => {
-                handlePasswordModalClose();
-            }, 2000);
-        } else {
-            setPasswordMessage({ type: 'error', text: result.message });
-        }
-    };
-
     const confirmDeleteTeacher = async () => {
         if (teacherToDelete) {
             await deleteTeacher(teacherToDelete.id);
@@ -121,15 +83,15 @@ const AdminDashboard: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-
                     <button onClick={() => setIsAddTeacherModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-3 md:py-2.5 rounded-xl shadow-lg transition-all active:scale-95">
                         <span>+ เพิ่มครูใหม่</span>
                     </button>
-                    <button onClick={() => setIsPasswordModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-gray-700 hover:text-indigo-600 bg-white px-5 py-3 md:py-2.5 rounded-xl shadow-sm border border-gray-200 transition-all active:scale-95">
-                        <KeyIcon className="h-5 w-5" />
-                        <span className="hidden sm:inline">เปลี่ยนรหัสผ่าน</span>
-                        <span className="sm:hidden">รหัสผ่าน</span>
-                    </button>
+                    {isSuperAdmin && (
+                        <button onClick={() => setPage(Page.TeacherDashboard)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-5 py-3 md:py-2.5 rounded-xl border border-indigo-200 transition-all active:scale-95">
+                            <TeacherIcon className="h-5 w-5" />
+                            <span>แผงควบคุมครู</span>
+                        </button>
+                    )}
                     <button onClick={() => setIsLogoutModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-gray-700 hover:text-red-600 bg-white px-5 py-3 md:py-2.5 rounded-xl shadow-sm border border-gray-200 transition-all active:scale-95">
                         <LogoutIcon className="h-5 w-5" />
                         <span>ออก</span>
@@ -319,45 +281,6 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex justify-end gap-4">
                                 <button type="button" onClick={() => setEditingTeacher(null)} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">ยกเลิก</button>
                                 <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">บันทึก</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Password Change Modal */}
-            {isPasswordModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md animate-fade-in-up">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-xl font-semibold text-gray-800">เปลี่ยนรหัสผ่าน</h2>
-                            <button onClick={handlePasswordModalClose} className="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                        </div>
-                        <form onSubmit={handleChangePassword}>
-                            {passwordMessage.text && (
-                                <div className={`p-3 rounded-lg mb-4 text-sm ${passwordMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                    {passwordMessage.text}
-                                </div>
-                            )}
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">รหัสผ่านปัจจุบัน</label>
-                                <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">รหัสผ่านใหม่</label>
-                                <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-                            </div>
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium text-gray-700">ยืนยันรหัสผ่านใหม่</label>
-                                <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" required />
-                            </div>
-                            <div className="flex justify-end gap-4">
-                                <button type="button" onClick={handlePasswordModalClose} className="bg-gray-200 text-gray-700 font-bold py-2 px-6 rounded-lg hover:bg-gray-300">
-                                    ยกเลิก
-                                </button>
-                                <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-indigo-700">
-                                    อัปเดตรหัสผ่าน
-                                </button>
                             </div>
                         </form>
                     </div>

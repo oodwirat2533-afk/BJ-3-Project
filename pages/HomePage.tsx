@@ -5,7 +5,7 @@ import { Page, Teacher } from '../types';
 import { AdminIcon, LogoIcon, TeacherIcon, StudentIcon } from '../components/Icons';
 
 const HomePage: React.FC = () => {
-  const { login, setPage, teachers, addTeacher, authenticateTeacher, authenticateAdmin, exams } = useAppContext();
+  const { login, setPage, teachers, addTeacher, authenticateTeacher, exams } = useAppContext();
   const [isLogin, setIsLogin] = useState(true);
   const [isStudentView, setIsStudentView] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -113,16 +113,6 @@ const HomePage: React.FC = () => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
-    if (usernameOrEmail.trim().toLowerCase() === 'admin') {
-      if (authenticateAdmin(password)) {
-        login('admin');
-        return;
-      } else {
-        setError('รหัสผ่านผู้ดูแลระบบไม่ถูกต้อง');
-        return;
-      }
-    }
 
     const teacher = authenticateTeacher(usernameOrEmail, password);
     if (teacher) {

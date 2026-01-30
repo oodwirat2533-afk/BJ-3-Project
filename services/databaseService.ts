@@ -17,14 +17,12 @@ export interface AppData {
   teachers: Teacher[];
   exams: Exam[];
   results: ExamResult[];
-  adminPassword: string;
 }
 
 // --- Firestore Collection References ---
 export const teachersCol = collection(db, "teachers");
 export const examsCol = collection(db, "exams");
 export const resultsCol = collection(db, "results");
-export const configCol = collection(db, "app_config");
 
 
 // --- Firestore Data Fetching ---
@@ -33,8 +31,7 @@ export const fetchData = async (): Promise<AppData> => {
     const fetchDataPromise = Promise.all([
       getDocs(teachersCol),
       getDocs(examsCol),
-      getDocs(resultsCol),
-      getDocs(configCol)
+      getDocs(resultsCol)
     ]);
 
     // Add a timeout to the database fetch operation to prevent infinite loading
@@ -43,53 +40,33 @@ export const fetchData = async (): Promise<AppData> => {
     );
 
     // Race the fetch against the timeout
-    const [teachersSnap, examsSnap, resultsSnap, configSnap] = await Promise.race([
+    const [teachersSnap, examsSnap, resultsSnap] = await Promise.race([
       fetchDataPromise,
       timeoutPromise
     ]);
-
-    if (configSnap.empty) {
-      console.log("No config found. Application might not be initialized.");
-      return {
-        teachers: [],
-        exams: [],
-        results: [],
-        adminPassword: ''
-      };
-    }
 
     const teachers = teachersSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Teacher));
     const exams = examsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Exam));
     const results = resultsSnap.docs.map(doc => {
       const data = doc.data();
-      // Convert Firestore Timestamp to JS Date
-      // Convert Firestore Timestamp to JS Date
       if (data.submittedAt) {
         if (typeof data.submittedAt.toDate === 'function') {
-          // Real Firestore Timestamp
           data.submittedAt = data.submittedAt.toDate();
         } else if (data.submittedAt.seconds !== undefined) {
-          // Plain object resembling timestamp (from JSON import)
           data.submittedAt = new Date(data.submittedAt.seconds * 1000);
         } else if (typeof data.submittedAt === 'string') {
-          // ISO String
           data.submittedAt = new Date(data.submittedAt);
-        }
-
-        // Debugging logs
-        if (data.submittedAt instanceof Date && isNaN(data.submittedAt.getTime())) {
-          console.error("Found Invalid Date in doc:", doc.id, "Raw value:", doc.data().submittedAt);
         }
       }
       return { id: doc.id, ...data } as ExamResult;
     });
-    const adminPassword = configSnap.docs[0].data().adminPassword;
 
     console.log("Data loaded successfully from Firestore.");
-    return { teachers, exams, results, adminPassword };
+    return { teachers, exams, results };
 
   } catch (error: any) {
     console.error("Failed to fetch data from Firestore:", error);
+    // ... (rest of error handling remains same)
 
     const errorMessage = error.message.includes("หมดเวลา")
       ? `การเชื่อมต่อฐานข้อมูลหมดเวลา (Timeout) ปัญหานี้มักเกิดจากสาเหตุต่อไปนี้:

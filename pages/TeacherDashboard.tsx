@@ -1,9 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../context/AppContext';
+import { useAppContext, SUPER_ADMIN_EMAIL } from '../context/AppContext';
 import { Page, Teacher, Exam } from '../types';
 import {
   TeacherIcon, FolderIcon, SchoolIcon, LinkIcon, KeyIcon, LogoutIcon, EditIcon, TrashIcon,
-  CopyIcon, CheckCircleIcon, ArrowLeftIcon, RefreshIcon
+  CopyIcon, CheckCircleIcon, ArrowLeftIcon, RefreshIcon, AdminIcon
 } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
 
@@ -367,6 +367,12 @@ const TeacherDashboard: React.FC = () => {
             <KeyIcon className="h-5 w-5" />
             <span>เปลี่ยนรหัสผ่าน</span>
           </button>
+          {teacher.email === SUPER_ADMIN_EMAIL && (
+            <button onClick={() => setPage(Page.AdminDashboard)} className="flex items-center gap-2 text-sm font-bold text-white bg-gray-800 hover:bg-gray-900 px-4 py-2 rounded-lg shadow-md transition-all active:scale-95">
+              <AdminIcon className="h-5 w-5" />
+              <span>จัดการระบบ (Admin)</span>
+            </button>
+          )}
           <button onClick={() => setIsLogoutModalOpen(true)} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-indigo-600 bg-white px-4 py-2 rounded-lg shadow-sm border">
             <LogoutIcon className="h-5 w-5" />
             <span>ออกจากระบบ</span>

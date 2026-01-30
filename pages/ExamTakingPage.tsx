@@ -299,7 +299,7 @@ const ExamTakingPage: React.FC = () => {
                     <p className="text-7xl font-mono font-bold">{cheatCountdown}</p>
                 </div>
             )}
-            <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center no-select">
                 <div className="w-full max-w-4xl">
                     <header className="bg-white shadow-md rounded-xl p-4 mb-6">
                         <div className="flex flex-col md:flex-row justify-between items-start md:items-center">

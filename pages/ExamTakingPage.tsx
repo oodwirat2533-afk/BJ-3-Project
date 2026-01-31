@@ -8,7 +8,7 @@ import { ClockIcon, WarningIcon } from '../components/Icons';
 import ConfirmationModal from '../components/ConfirmationModal';
 
 const ExamTakingPage: React.FC = () => {
-    const { setPage, activeExam, addResult, activeStudent: student } = useAppContext();
+    const { setPage, activeExam, addResult, activeStudent: student, setNotification } = useAppContext();
     const { isPrimaryTab } = useSingletonTab('exam-session-channel');
 
     const [isInitialized, setIsInitialized] = useState(false);
@@ -34,6 +34,39 @@ const ExamTakingPage: React.FC = () => {
 
     const [localExam, setLocalExam] = useState<typeof activeExam>(null);
     const hasInitialized = useRef(false);
+
+    const submitExam = useCallback(async () => {
+        if (!student || !activeExam) return;
+        isSubmitting.current = true;
+        setShowConfirmModal(false);
+
+        const doc = document as any;
+        if (doc.fullscreenElement || doc.webkitFullscreenElement) {
+            if (doc.exitFullscreen) {
+                doc.exitFullscreen();
+            } else if (doc.webkitExitFullscreen) {
+                doc.webkitExitFullscreen();
+            }
+        }
+
+        let score = 0;
+        const examData = localExam || activeExam;
+        if (!examData) return;
+
+        answers.forEach(answer => {
+            const question = examData.questions.find(q => q.id === answer.questionId);
+            if (question && question.correctAnswerIndex === answer.selectedAnswerIndex) {
+                score++;
+            }
+        });
+        await addResult({
+            examId: examData.id,
+            student,
+            score,
+            total: examData.totalQuestions,
+            answers
+        });
+    }, [student, activeExam, localExam, answers, addResult]);
 
     const startNewTest = useCallback((examToUse: typeof activeExam) => {
         if (examToUse) {
@@ -140,45 +173,30 @@ const ExamTakingPage: React.FC = () => {
     const handleCheating = useCallback(() => {
         if (!hasInitialized.current) return;
 
-        alert("คุณออกจากหน้าจอสอบ หรือพยายามทุจริต! ระบบจะทำการเริ่มข้อสอบใหม่ทันที");
+        setNotification({
+            title: "ตรวจพบการทุจริต",
+            message: "คุณออกจากหน้าจอสอบ หรือพยายามทุจริต!\nระบบจะทำการเริ่มข้อสอบใหม่ทันที",
+            type: "error"
+        });
         if (localExam) startNewTest(localExam);
-    }, [localExam, startNewTest]);
+    }, [localExam, startNewTest, setNotification]);
 
     useAntiCheat(handleCheating, true);
 
-
-    const submitExam = useCallback(() => {
-        if (!student || !activeExam) return;
-        isSubmitting.current = true;
-        setShowConfirmModal(false);
-
-        const doc = document as any;
-        if (doc.fullscreenElement || doc.webkitFullscreenElement) {
-            if (doc.exitFullscreen) {
-                doc.exitFullscreen();
-            } else if (doc.webkitExitFullscreen) {
-                doc.webkitExitFullscreen();
-            }
+    // Monitor if teacher closes the exam while student is taking it
+    useEffect(() => {
+        if (isInitialized && activeExam && activeExam.isActive === false && !isSubmitting.current) {
+            submitExam().then(() => {
+                setNotification({
+                    title: "การสอบถูกปิดแล้ว",
+                    message: "คุณครูปิดระบบรับคำตอบแล้ว\nระบบได้ทำการส่งคำตอบให้คุณโดยอัตโนมัติ",
+                    type: "info"
+                });
+            });
         }
+    }, [activeExam?.isActive, isInitialized, submitExam, setNotification]);
 
-        let score = 0;
-        const examData = localExam || activeExam;
-        if (!examData) return;
 
-        answers.forEach(answer => {
-            const question = examData.questions.find(q => q.id === answer.questionId);
-            if (question && question.correctAnswerIndex === answer.selectedAnswerIndex) {
-                score++;
-            }
-        });
-        addResult({
-            examId: examData.id,
-            student,
-            score,
-            total: examData.totalQuestions,
-            answers
-        });
-    }, [student, activeExam, localExam, answers, addResult]);
 
     useEffect(() => {
         if (!isInitialized) return;

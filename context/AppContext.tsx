@@ -14,6 +14,12 @@ import { onSnapshot, Timestamp } from 'firebase/firestore';
 
 export const SUPER_ADMIN_EMAIL = 'wirat@banhan3.ac.th';
 
+export interface AppNotification {
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+}
+
 interface AppContextType {
   // State
   isLoading: boolean;
@@ -29,8 +35,10 @@ interface AppContextType {
   selectedSubject: string | null;
   returnPath: { page: Page; context?: any } | null;
   examDashboardFilters: { room: string; sortBy: 'number' | 'score' | 'date'; score: string };
+  notification: AppNotification | null;
 
   // Actions
+  setNotification: (notif: AppNotification | null) => void;
   setPage: (page: Page, context?: any) => void;
   goBack: () => void;
   retryLoad: () => void;
@@ -82,6 +90,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [returnPath, setReturnPath] = useState<{ page: Page; context?: any } | null>(null);
   const [examDashboardFilters, setExamDashboardFilters] = useState(defaultExamDashboardFilters);
+  const [notification, setNotification] = useState<AppNotification | null>(null);
 
   // Effect for initial data loading from the online database
   useEffect(() => {
@@ -183,7 +192,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       prev.questions.length === found.questions.length &&
       prev.timeLimit === found.timeLimit &&
       prev.examCode === found.examCode &&
-      prev.requireFullscreen === found.requireFullscreen
+      prev.requireFullscreen === found.requireFullscreen &&
+      prev.isActive === found.isActive
     ) {
       return prev;
     }
@@ -399,6 +409,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     selectedSubject,
     returnPath,
     examDashboardFilters,
+    notification,
     setPage,
     goBack,
     retryLoad,
@@ -408,6 +419,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     updateTeacherPassword,
     setSelectedSubject: stableSetSelectedSubject,
     setExamDashboardFilters,
+    setNotification,
     addTeacher,
     updateTeacher,
     deleteTeacher,
@@ -421,9 +433,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }), [
     isLoading, error, page, teachers, exams, results, loggedInUser,
     activeExam, activeResult, activeStudent, selectedSubject, returnPath,
-    examDashboardFilters, setPage, goBack, retryLoad, login, logout,
+    examDashboardFilters, notification, setPage, goBack, retryLoad, login, logout,
     updateTeacherPassword, stableSetSelectedSubject,
-    setExamDashboardFilters, addTeacher, updateTeacher, deleteTeacher,
+    setExamDashboardFilters, setNotification, addTeacher, updateTeacher, deleteTeacher,
     addExam, updateExam, deleteExam, addResult, deleteResult,
     deleteResultsForExam, deleteResultsForRoom
   ]);

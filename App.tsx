@@ -40,8 +40,10 @@ const ErrorScreen: React.FC<{ message: string; onRetry: () => void }> = ({ messa
   </div>
 );
 
+import NotificationModal from './components/NotificationModal';
+
 const App: React.FC = () => {
-  const { page, isLoading, error, retryLoad } = useAppContext();
+  const { page, isLoading, error, retryLoad, notification, setNotification } = useAppContext();
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 text-gray-800">
@@ -71,6 +73,14 @@ const App: React.FC = () => {
               }
             })()}
           </main>
+          {notification && (
+            <NotificationModal
+              title={notification.title}
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
         </>
       )}
     </div>

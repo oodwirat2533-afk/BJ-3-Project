@@ -82,17 +82,17 @@ const AdminDashboard: React.FC = () => {
                         <p className="text-gray-500 mt-2">จัดการบัญชีผู้ใช้งานครูและตั้งค่าระบบ</p>
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <button onClick={() => setIsAddTeacherModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-5 py-3 md:py-2.5 rounded-xl shadow-lg transition-all active:scale-95">
+                <div className="flex flex-nowrap overflow-x-auto items-center justify-end gap-2 sm:gap-3 w-full md:w-auto pb-1 md:pb-0 scrollbar-hide">
+                    <button onClick={() => setIsAddTeacherModalOpen(true)} className="flex-none flex items-center justify-center gap-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 sm:px-5 py-3 md:py-2.5 rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap">
                         <span>+ เพิ่มครูใหม่</span>
                     </button>
                     {isSuperAdmin && (
-                        <button onClick={() => setPage(Page.TeacherDashboard)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-5 py-3 md:py-2.5 rounded-xl border border-indigo-200 transition-all active:scale-95">
+                        <button onClick={() => setPage(Page.TeacherDashboard)} className="flex-none flex items-center justify-center gap-2 text-sm font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 sm:px-5 py-3 md:py-2.5 rounded-xl border border-indigo-200 transition-all active:scale-95 whitespace-nowrap">
                             <TeacherIcon className="h-5 w-5" />
                             <span>แผงควบคุมครู</span>
                         </button>
                     )}
-                    <button onClick={() => setIsLogoutModalOpen(true)} className="flex-1 md:flex-none flex items-center justify-center gap-2 text-sm font-bold text-gray-700 hover:text-red-600 bg-white px-5 py-3 md:py-2.5 rounded-xl shadow-sm border border-gray-200 transition-all active:scale-95">
+                    <button onClick={() => setIsLogoutModalOpen(true)} className="flex-none flex items-center justify-center gap-2 text-sm font-bold text-gray-700 hover:text-red-600 bg-white px-3 sm:px-5 py-3 md:py-2.5 rounded-xl shadow-sm border border-gray-200 transition-all active:scale-95 whitespace-nowrap">
                         <LogoutIcon className="h-5 w-5" />
                         <span>ออก</span>
                     </button>

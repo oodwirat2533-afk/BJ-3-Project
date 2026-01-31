@@ -21,11 +21,6 @@ const ExamTakingPage: React.FC = () => {
     const isSubmitting = useRef(false);
     const [showFullscreenWarning, setShowFullscreenWarning] = useState(false);
 
-    // Anti-cheat grace period state
-    const [showCheatWarning, setShowCheatWarning] = useState(false);
-    const [cheatCountdown, setCheatCountdown] = useState(5);
-    const warningTimers = useRef<{ interval: number | null, timeout: number | null }>({ interval: null, timeout: null });
-
     const optionLabels = ['ก', 'ข', 'ค', 'ง'];
 
     const shuffleArray = <T,>(array: T[]): T[] => {
@@ -141,44 +136,16 @@ const ExamTakingPage: React.FC = () => {
     }, [activeExam?.requireFullscreen, isInitialized, startNewTest]);
 
 
-    const cancelCheatingWarning = useCallback(() => {
-        if (warningTimers.current.interval) clearInterval(warningTimers.current.interval);
-        if (warningTimers.current.timeout) clearTimeout(warningTimers.current.timeout);
-        warningTimers.current = { interval: null, timeout: null };
-        setShowCheatWarning(false);
-    }, []);
 
     const handleCheating = useCallback(() => {
-        if (showCheatWarning || !hasInitialized.current) return;
+        if (!hasInitialized.current) return;
 
-        setShowCheatWarning(true);
-        setCheatCountdown(5);
-
-        warningTimers.current.interval = window.setInterval(() => {
-            setCheatCountdown(prev => prev - 1);
-        }, 1000);
-
-        warningTimers.current.timeout = window.setTimeout(() => {
-            cancelCheatingWarning();
-            alert("คุณออกจากหน้าจอสอบนานเกินไป หรือพยายามทุจริต! ระบบจะทำการเริ่มข้อสอบใหม่");
-            if (localExam) startNewTest(localExam);
-        }, 5000);
-    }, [showCheatWarning, localExam, startNewTest, cancelCheatingWarning]);
+        alert("คุณออกจากหน้าจอสอบ หรือพยายามทุจริต! ระบบจะทำการเริ่มข้อสอบใหม่ทันที");
+        if (localExam) startNewTest(localExam);
+    }, [localExam, startNewTest]);
 
     useAntiCheat(handleCheating, true);
 
-    useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible' && showCheatWarning) {
-                cancelCheatingWarning();
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-        };
-    }, [showCheatWarning, cancelCheatingWarning]);
 
     const submitExam = useCallback(() => {
         if (!student || !activeExam) return;
@@ -286,17 +253,6 @@ const ExamTakingPage: React.FC = () => {
                     >
                         กลับเข้าสู่โหมดเต็มจอ
                     </button>
-                </div>
-            )}
-            {showCheatWarning && (
-                <div className="fixed inset-0 bg-red-800 bg-opacity-95 flex flex-col items-center justify-center z-50 text-white p-4 animate-fade-in-down">
-                    <WarningIcon className="w-24 h-24 text-yellow-300 mb-6 animate-pulse" />
-                    <h1 className="text-4xl font-bold mb-4">ตรวจพบการออกจากหน้าต่างสอบ!</h1>
-                    <p className="text-xl max-w-2xl text-center mb-8">
-                        กรุณากลับมาที่หน้าต่างนี้เพื่อทำข้อสอบต่อ<br />
-                        ระบบจะทำการรีเซ็ตข้อสอบในอีก...
-                    </p>
-                    <p className="text-7xl font-mono font-bold">{cheatCountdown}</p>
                 </div>
             )}
             <div className="min-h-screen bg-gray-100 p-4 flex items-center justify-center no-select">
